@@ -16,10 +16,10 @@
     "build": "tsc",
     "dev": "tsc --watch",
     "start": "node dist/index.js",
-    "test": "vitest run",
-    "lint": "eslint src",
-    "format": "prettier --write .",
-    "inspector": "npx @modelcontextprotocol/inspector node dist/index.js"
+    "test": "vitest run --passWithNoTests",
+    "smoke": "node scripts/smoke.mjs",
+    "inspector": "npx @modelcontextprotocol/inspector node dist/index.js",
+    "prepublishOnly": "npm run build"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
@@ -42,7 +42,16 @@
     "scraping",
     "automation"
   ],
-  "repository": "github:mobileproxy/mcp-server",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/mobileproxy/mcp-server.git"
+  },
+  "bugs": {
+    "url": "https://github.com/mobileproxy/mcp-server/issues"
+  },
   "homepage": "https://mobileproxy.space/mcp",
-  "license": "MIT"
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  }
 }

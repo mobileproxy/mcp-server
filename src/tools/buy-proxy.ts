@@ -15,35 +15,45 @@ const PROXY_TYPE_MAP = { mobile: 0, server: 1, backconnect: 2 } as const;
 const ALLOWED_PERIODS = [1, 3, 7, 14, 30, 60, 90, 180, 365] as const;
 
 export function registerBuyProxy(server: McpServer, api: MobileProxyAPI): void {
-  server.tool(
+  server.registerTool(
     'buy_proxy',
-    'Purchases one or more new mobile proxies and adds them to the account. ' +
-      'Charges the balance IMMEDIATELY — REQUIRES explicit user confirmation. ' +
-      'Always call get_balance + get_price first, and ideally do a dry-run with ' +
-      'estimate_only=true to see the final amount. country accepts ISO code or ' +
-      'numeric id_country; for geo-precise orders pass geoid from get_geo_list. ' +
-      'period_days must be one of 1,3,7,14,30,60,90,180,365. Returns the new ' +
-      'proxies with full connection details on success.',
     {
-      country: z.string().length(2).optional()
-        .describe('Target country as 2-letter ISO code (or use id_country / geoid)'),
-      id_country: z.number().int().positive().optional()
-        .describe('Target country as numeric id_country'),
-      geoid: z.number().int().positive().optional()
-        .describe('Specific geo from get_geo_list (most precise)'),
-      operator: z.string().optional()
-        .describe('Operator name (e.g. "megafone", "MTS")'),
-      period_days: z.number().int().positive()
-        .refine((v): v is (typeof ALLOWED_PERIODS)[number] => (ALLOWED_PERIODS as readonly number[]).includes(v), {
-          message: 'period_days must be one of 1, 3, 7, 14, 30, 60, 90, 180, 365',
-        })
-        .describe('Proxy duration in days; one of 1, 3, 7, 14, 30, 60, 90, 180, 365'),
-      count: z.number().int().min(1).max(50).default(1)
-        .describe('How many proxies to buy (max 50 in one call)'),
-      type: z.enum(['mobile', 'server', 'backconnect']).default('mobile'),
-      auto_renewal: z.boolean().default(false),
-      estimate_only: z.boolean().default(false)
-        .describe('Dry-run: returns the total amount without charging or allocating'),
+      title: 'Purchase a new mobile proxy',
+      description:
+        'Purchases one or more new mobile proxies and adds them to the account. ' +
+        'Charges the balance IMMEDIATELY — REQUIRES explicit user confirmation. ' +
+        'Always call get_balance + get_price first, and ideally do a dry-run with ' +
+        'estimate_only=true to see the final amount. country accepts ISO code or ' +
+        'numeric id_country; for geo-precise orders pass geoid from get_geo_list. ' +
+        'period_days must be one of 1,3,7,14,30,60,90,180,365. Returns the new ' +
+        'proxies with full connection details on success.',
+      inputSchema: {
+        country: z.string().length(2).optional()
+          .describe('Target country as 2-letter ISO code (or use id_country / geoid)'),
+        id_country: z.number().int().positive().optional()
+          .describe('Target country as numeric id_country'),
+        geoid: z.number().int().positive().optional()
+          .describe('Specific geo from get_geo_list (most precise)'),
+        operator: z.string().optional()
+          .describe('Operator name (e.g. "megafone", "MTS")'),
+        period_days: z.number().int().positive()
+          .refine((v): v is (typeof ALLOWED_PERIODS)[number] => (ALLOWED_PERIODS as readonly number[]).includes(v), {
+            message: 'period_days must be one of 1, 3, 7, 14, 30, 60, 90, 180, 365',
+          })
+          .describe('Proxy duration in days; one of 1, 3, 7, 14, 30, 60, 90, 180, 365'),
+        count: z.number().int().min(1).max(50).default(1)
+          .describe('How many proxies to buy (max 50 in one call)'),
+        type: z.enum(['mobile', 'server', 'backconnect']).default('mobile'),
+        auto_renewal: z.boolean().default(false),
+        estimate_only: z.boolean().default(false)
+          .describe('Dry-run: returns the total amount without charging or allocating'),
+      },
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: true,
+        idempotentHint: false,
+        openWorldHint: true,
+      },
     },
     async ({ country, id_country, geoid, operator, period_days, count, type, auto_renewal, estimate_only }) => {
       try {

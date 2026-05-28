@@ -56,6 +56,25 @@ All read tools cache geo/country lookups (5–60 min) to stay friendly with the 
 | `MOBILEPROXY_TIMEOUT_MS` | `30000` | HTTP request timeout |
 | `MOBILEPROXY_DEBUG` | `0` | Set to `1` for verbose stderr logs |
 
+## Client compatibility
+
+| Client | Supported | Notes |
+|---|---|---|
+| Claude Code CLI | ✅ | `${env:VAR}` substitution works in `.mcp.json` |
+| Cursor | ✅ | hard-code env in config (no substitution) |
+| Windsurf | ✅ | as Cursor |
+| Cowork / CCD | ⚠️ | works but `${env:VAR}` is **not** substituted — hard-code locally |
+| Claude Desktop (classic) | ✅ | put `mcpServers` block in `claude_desktop_config.json` |
+
+See [docs/INSTALL.md](docs/INSTALL.md) for per-client setup and the env-var workaround.
+
+## Links
+
+- [Install guide](docs/INSTALL.md)
+- [Publishing runbook](docs/PUBLISH.md)
+- [Full development spec](https://mobileproxy.space) (internal)
+- [Model Context Protocol](https://modelcontextprotocol.io)
+
 ## License
 
 MIT

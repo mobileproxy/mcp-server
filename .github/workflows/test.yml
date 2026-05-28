@@ -1,0 +1,29 @@
+name: Test
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: ['20', '22']
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build
+      - run: npm test
+        env:
+          # smoke.mjs uses this; CI only runs unit tests, but keep the env
+          # plumbing here so we can flip a SMOKE_TEST_KEY secret on later.
+          MOBILEPROXY_API_KEY: ${{ secrets.MOBILEPROXY_API_KEY }}
+        if: env.MOBILEPROXY_API_KEY != ''

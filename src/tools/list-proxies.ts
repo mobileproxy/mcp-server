@@ -16,23 +16,28 @@ function parseDateTime(s: string): number {
 }
 
 export function registerListProxies(server: McpServer, api: MobileProxyAPI): void {
-  server.tool(
+  server.registerTool(
     'list_proxies',
-    'Returns all proxies owned by the authenticated user with full connection ' +
-      'details (host, port, login, password, geo, operator, expiration). ' +
-      'Use this first when the user asks anything about "my proxies", to find a ' +
-      'specific proxy, or to get a proxy_id needed for other tools. Supports ' +
-      'filtering by type (mobile/server/backconnect/residential) and id_country ' +
-      '(numeric ID — use get_country_list to resolve from ISO codes; that tool ' +
-      'lands in v0.2). The server already drops expired proxies, but active_only ' +
-      'rechecks client-side as a safety net.',
     {
-      type: z.enum(['mobile', 'server', 'backconnect', 'residential']).optional()
-        .describe('Filter by proxy type'),
-      id_country: z.number().int().positive().optional()
-        .describe('Filter by numeric country ID (not ISO code)'),
-      active_only: z.boolean().default(true)
-        .describe('Hide expired proxies (default: true)'),
+      title: 'List my proxies',
+      description:
+        'Returns all proxies owned by the authenticated user with full connection ' +
+        'details (host, port, login, password, geo, operator, expiration). ' +
+        'Use this first when the user asks anything about "my proxies", to find a ' +
+        'specific proxy, or to get a proxy_id needed for other tools. Supports ' +
+        'filtering by type (mobile/server/backconnect/residential) and id_country ' +
+        '(numeric ID — use get_country_list to resolve from ISO codes; that tool ' +
+        'lands in v0.2). The server already drops expired proxies, but active_only ' +
+        'rechecks client-side as a safety net.',
+      inputSchema: {
+        type: z.enum(['mobile', 'server', 'backconnect', 'residential']).optional()
+          .describe('Filter by proxy type'),
+        id_country: z.number().int().positive().optional()
+          .describe('Filter by numeric country ID (not ISO code)'),
+        active_only: z.boolean().default(true)
+          .describe('Hide expired proxies (default: true)'),
+      },
+      annotations: { readOnlyHint: true, openWorldHint: true },
     },
     async ({ type, id_country, active_only }) => {
       try {

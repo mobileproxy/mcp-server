@@ -5,18 +5,23 @@ import type { ProxyIpResponse } from '../api/types.js';
 import { toMcpError } from '../api/errors.js';
 
 export function registerGetProxyStatus(server: McpServer, api: MobileProxyAPI): void {
-  server.tool(
+  server.registerTool(
     'get_proxy_status',
-    'Returns the CURRENT external IP of a proxy and optionally checks if that ' +
-      'IP is listed in spam/abuse blacklists (Spamhaus, Stop Forum Spam, etc). ' +
-      'Use to verify a fresh rotation succeeded, or to decide if you need to ' +
-      'rotate again because the IP is dirty. The check_spam=true mode is slower ' +
-      '(~3s extra) but is the only way to assess IP quality.',
     {
-      proxy_id: z.number().int().positive()
-        .describe('proxy_id from list_proxies'),
-      check_spam: z.boolean().default(false)
-        .describe('Run spam-blacklist check (slower, ~3s extra)'),
+      title: 'Get current proxy IP & health',
+      description:
+        'Returns the CURRENT external IP of a proxy and optionally checks if that ' +
+        'IP is listed in spam/abuse blacklists (Spamhaus, Stop Forum Spam, etc). ' +
+        'Use to verify a fresh rotation succeeded, or to decide if you need to ' +
+        'rotate again because the IP is dirty. The check_spam=true mode is slower ' +
+        '(~3s extra) but is the only way to assess IP quality.',
+      inputSchema: {
+        proxy_id: z.number().int().positive()
+          .describe('proxy_id from list_proxies'),
+        check_spam: z.boolean().default(false)
+          .describe('Run spam-blacklist check (slower, ~3s extra)'),
+      },
+      annotations: { readOnlyHint: true, openWorldHint: true },
     },
     async ({ proxy_id, check_spam }) => {
       try {

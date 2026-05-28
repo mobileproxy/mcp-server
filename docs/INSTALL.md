@@ -61,13 +61,30 @@ If the agent reaches for a different tool or asks for clarifying info you'd
 expect it to figure out from the descriptions, that's a signal to tighten
 the tool's `description` text and rebuild.
 
+## Caveats by client
+
+| Client | `${env:VAR}` in env block | Approval prompt | Cached child process |
+|---|---|---|---|
+| Claude Code CLI | ✅ substituted | yes | restart on `.mcp.json` change |
+| Cowork / CCD UI | ❌ passed literally | silent in Auto-mode | restart on close-session |
+| Claude Desktop (classic) | depends on version | yes | restart of app |
+| Cursor / Windsurf | varies | yes | varies |
+
+**Cowork-specific workaround** until DXT-packaging lands: while developing, hard-code
+`MOBILEPROXY_API_KEY` directly in `.mcp.json` and revert via `git checkout .mcp.json`
+before commit. Or set the env var system-wide via PowerShell (`[Environment]::SetEnvironmentVariable(...)`)
+and **fully quit + relaunch** the Cowork app — the variable must exist before app start.
+
 ## Troubleshooting
 
 - **`MOBILEPROXY_API_KEY environment variable is required`** in stderr →
-  the env block isn't reaching the child process. Check your client's
-  config file syntax.
+  the env block isn't reaching the child process. In Cowork hard-code in
+  `.mcp.json` (see above). In Claude Code CLI ensure your shell has the
+  var set before `claude` starts.
 - **`Authorization error #4`** → your API token is IP-restricted and the
   machine running this server isn't in the allowlist. Edit the token at
   https://mobileproxy.space/user.html?api .
 - **Tool list empty** → run `node dist/index.js` manually to see startup
   errors in stderr; the MCP transport sometimes swallows them.
+- **Server reports `IP rotation failed: ...wait N seconds`** → rotation
+  has a per-proxy cooldown. Try again after the suggested delay.

@@ -6,28 +6,38 @@ import { toMcpError } from '../api/errors.js';
 import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
 
 export function registerChangeGeo(server: McpServer, api: MobileProxyAPI): void {
-  server.tool(
+  server.registerTool(
     'change_geo',
-    'Swaps the underlying modem of a proxy to one in a different country and/or ' +
-      'with a different mobile operator, WITHOUT buying a new proxy (the same ' +
-      'proxy_id keeps its login/password — only the physical location changes). ' +
-      'Pass at least one of: country (ISO code), id_country (numeric), geoid ' +
-      '(from get_geo_list — most specific), or operator (name). Use ' +
-      'check_after_change=true to have the server verify the new IP is live ' +
-      'before returning (adds 1-10s). Subject to a per-proxy cooldown.',
     {
-      proxy_id: z.number().int().positive()
-        .describe('proxy_id from list_proxies'),
-      country: z.string().length(2).optional()
-        .describe('Target country as 2-letter ISO code'),
-      id_country: z.number().int().positive().optional()
-        .describe('Target country as numeric id_country (alternative to ISO)'),
-      geoid: z.number().int().positive().optional()
-        .describe('Target geo as geoid from get_geo_list — most specific'),
-      operator: z.string().optional()
-        .describe('Target operator name (e.g. "megafone", "MTS")'),
-      check_after_change: z.boolean().default(true)
-        .describe('Wait for the API to verify the new IP'),
+      title: 'Change proxy country / operator',
+      description:
+        'Swaps the underlying modem of a proxy to one in a different country and/or ' +
+        'with a different mobile operator, WITHOUT buying a new proxy (the same ' +
+        'proxy_id keeps its login/password — only the physical location changes). ' +
+        'Pass at least one of: country (ISO code), id_country (numeric), geoid ' +
+        '(from get_geo_list — most specific), or operator (name). Use ' +
+        'check_after_change=true to have the server verify the new IP is live ' +
+        'before returning (adds 1-10s). Subject to a per-proxy cooldown.',
+      inputSchema: {
+        proxy_id: z.number().int().positive()
+          .describe('proxy_id from list_proxies'),
+        country: z.string().length(2).optional()
+          .describe('Target country as 2-letter ISO code'),
+        id_country: z.number().int().positive().optional()
+          .describe('Target country as numeric id_country (alternative to ISO)'),
+        geoid: z.number().int().positive().optional()
+          .describe('Target geo as geoid from get_geo_list — most specific'),
+        operator: z.string().optional()
+          .describe('Target operator name (e.g. "megafone", "MTS")'),
+        check_after_change: z.boolean().default(true)
+          .describe('Wait for the API to verify the new IP'),
+      },
+      annotations: {
+        readOnlyHint: false,
+        destructiveHint: false,
+        idempotentHint: false,
+        openWorldHint: true,
+      },
     },
     async ({ proxy_id, country, id_country, geoid, operator, check_after_change }) => {
       try {
