@@ -7,3 +7,4 @@ dist/
 .vscode/
 .idea/
 coverage/
+.git-commit-msg.tmp
