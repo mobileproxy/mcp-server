@@ -4,38 +4,50 @@ import type { MobileProxyAPI } from '../api/client.js';
 import type { Proxy, ProxyType } from '../api/types.js';
 import { toMcpError } from '../api/errors.js';
 
-const TYPE_MAP: Record<string, ProxyType> = { mobile: 0, server: 1, backconnect: 2 };
+const TYPE_MAP: Record<string, ProxyType> = { mobile: 0, server: 1, backconnect: 2, residential: 3 };
+
+/**
+ * MySQL DATETIME "YYYY-MM-DD HH:MM:SS" → epoch ms. Treated as UTC for a stable
+ * comparison; a ±3h skew vs the server's MSK timezone is harmless for "is this
+ * proxy expired" checks since proxies live for days/weeks/months.
+ */
+function parseDateTime(s: string): number {
+  return Date.parse(s.replace(' ', 'T') + 'Z');
+}
 
 export function registerListProxies(server: McpServer, api: MobileProxyAPI): void {
   server.tool(
     'list_proxies',
     'Returns all proxies owned by the authenticated user with full connection ' +
-      'details (host, port, login, password, country, operator, expiration). ' +
+      'details (host, port, login, password, geo, operator, expiration). ' +
       'Use this first when the user asks anything about "my proxies", to find a ' +
-      'proxy by country, or to get a proxy_id needed for other tools. Supports ' +
-      'filtering by type: mobile / server / backconnect.',
+      'specific proxy, or to get a proxy_id needed for other tools. Supports ' +
+      'filtering by type (mobile/server/backconnect/residential) and id_country ' +
+      '(numeric ID — use get_country_list to resolve from ISO codes; that tool ' +
+      'lands in v0.2). The server already drops expired proxies, but active_only ' +
+      'rechecks client-side as a safety net.',
     {
-      type: z.enum(['mobile', 'server', 'backconnect']).optional()
-        .describe('Filter by proxy type (default: all)'),
-      country: z.string().length(2).optional()
-        .describe('Filter by ISO country code, e.g. "RU", "US"'),
+      type: z.enum(['mobile', 'server', 'backconnect', 'residential']).optional()
+        .describe('Filter by proxy type'),
+      id_country: z.number().int().positive().optional()
+        .describe('Filter by numeric country ID (not ISO code)'),
       active_only: z.boolean().default(true)
         .describe('Hide expired proxies (default: true)'),
     },
-    async ({ type, country, active_only }) => {
+    async ({ type, id_country, active_only }) => {
       try {
         const typeNum = type !== undefined ? TYPE_MAP[type] : undefined;
-        const data = await api.getMyProxy({ type: typeNum });
+        let items = await api.getMyProxy({ type: typeNum });
 
-        let items: Proxy[] = data.proxy_list ?? [];
-
-        if (country) {
-          const cc = country.toUpperCase();
-          items = items.filter((p) => (p.proxy_geo ?? '').toUpperCase() === cc);
+        if (id_country !== undefined) {
+          items = items.filter((p) => Number(p.id_country) === id_country);
         }
         if (active_only) {
-          const nowSec = Date.now() / 1000;
-          items = items.filter((p) => Number(p.proxy_exp) > nowSec);
+          const nowMs = Date.now();
+          items = items.filter((p) => {
+            const exp = parseDateTime(p.proxy_exp);
+            return Number.isFinite(exp) ? exp > nowMs : true; /* keep if unparseable */
+          });
         }
 
         return {
@@ -52,3 +64,5 @@ export function registerListProxies(server: McpServer, api: MobileProxyAPI): voi
     },
   );
 }
+
+export type { Proxy };
