@@ -1,0 +1,16 @@
+{
+  "_comment_about_this_file": [
+    "Drop the `mcpServers` block into ~/Library/Application Support/Claude/claude_desktop_config.json (macOS)",
+    "or %APPDATA%\\Claude\\claude_desktop_config.json (Windows). Restart Claude Desktop.",
+    "After publish you can use 'npx -y @mobileproxy/mcp-server' — for now use the local dist/ path."
+  ],
+  "mcpServers": {
+    "mobileproxy": {
+      "command": "node",
+      "args": ["C:\\Users\\m\\Downloads\\Proxy\\mobileproxy-mcp-server\\dist\\index.js"],
+      "env": {
+        "MOBILEPROXY_API_KEY": "YOUR_API_KEY_HERE"
+      }
+    }
+  }
+}

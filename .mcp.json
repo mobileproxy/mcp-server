@@ -1,0 +1,11 @@
+{
+  "mcpServers": {
+    "mobileproxy": {
+      "command": "node",
+      "args": ["./dist/index.js"],
+      "env": {
+        "MOBILEPROXY_API_KEY": "${env:MOBILEPROXY_API_KEY}"
+      }
+    }
+  }
+}

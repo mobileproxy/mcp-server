@@ -1,0 +1,18 @@
+{
+  "_comment_about_this_file": [
+    "Save this as `.mcp.json` in the root of any project you want to use mobileproxy from.",
+    "Claude Code reads the file on startup; you'll be prompted to approve the server.",
+    "MOBILEPROXY_API_KEY is read from your shell env via ${env:...} — set it once",
+    "(e.g. in your PowerShell profile) so you don't have to put it in this file.",
+    "After npm publish, swap the command/args block for the npx variant shown in claude-desktop.json."
+  ],
+  "mcpServers": {
+    "mobileproxy": {
+      "command": "node",
+      "args": ["C:\\Users\\m\\Downloads\\Proxy\\mobileproxy-mcp-server\\dist\\index.js"],
+      "env": {
+        "MOBILEPROXY_API_KEY": "${env:MOBILEPROXY_API_KEY}"
+      }
+    }
+  }
+}

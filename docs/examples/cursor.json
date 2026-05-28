@@ -1,0 +1,15 @@
+{
+  "_comment_about_this_file": [
+    "Cursor's MCP config lives in ~/.cursor/mcp.json (global) or .cursor/mcp.json (per-workspace).",
+    "Drop the mcpServers block in there and restart Cursor."
+  ],
+  "mcpServers": {
+    "mobileproxy": {
+      "command": "node",
+      "args": ["C:\\Users\\m\\Downloads\\Proxy\\mobileproxy-mcp-server\\dist\\index.js"],
+      "env": {
+        "MOBILEPROXY_API_KEY": "YOUR_API_KEY_HERE"
+      }
+    }
+  }
+}
