@@ -1,0 +1,9 @@
+src/
+tests/
+tsconfig.json
+.gitignore
+.github/
+docs/
+examples/
+*.log
+coverage/
