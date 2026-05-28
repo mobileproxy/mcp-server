@@ -119,6 +119,50 @@ try {
     sectionDivider('5. rotate_ip — SKIPPED (no mobile proxy_id)');
   }
 
+  sectionDivider('6. callTool get_balance');
+  try {
+    const res = await client.callTool({ name: 'get_balance', arguments: {} });
+    console.log('isError:', res.isError ?? false);
+    console.log(truncate(res.content?.[0]?.text ?? '(empty)', 1000));
+    if (res.isError) exitCode = 1;
+  } catch (e) {
+    console.error('TOOL ERROR:', e.message);
+    exitCode = 1;
+  }
+
+  sectionDivider('7. callTool get_geo_list (country=RU)');
+  try {
+    const res = await client.callTool({
+      name: 'get_geo_list',
+      arguments: { country: 'RU' },
+    });
+    console.log('isError:', res.isError ?? false);
+    console.log(truncate(res.content?.[0]?.text ?? '(empty)', 1500));
+    if (res.isError) exitCode = 1;
+  } catch (e) {
+    console.error('TOOL ERROR:', e.message);
+    exitCode = 1;
+  }
+
+  sectionDivider('8. callTool get_price (country=RU, currency=RUB)');
+  try {
+    const res = await client.callTool({
+      name: 'get_price',
+      arguments: { country: 'RU', currency: 'RUB' },
+    });
+    console.log('isError:', res.isError ?? false);
+    console.log(truncate(res.content?.[0]?.text ?? '(empty)', 2500));
+    if (res.isError) exitCode = 1;
+  } catch (e) {
+    console.error('TOOL ERROR:', e.message);
+    exitCode = 1;
+  }
+
+  /* change_geo and buy_proxy intentionally skipped: change_geo has a cooldown
+     and rearranges hardware; buy_proxy spends real money. Add a manual opt-in
+     flag (e.g. SMOKE_TEST_DESTRUCTIVE=1) if you need to exercise them. */
+  sectionDivider('SKIPPED: change_geo, buy_proxy (destructive — opt-in needed)');
+
   sectionDivider(`Result: ${exitCode === 0 ? 'PASS' : 'FAIL'}`);
 } catch (err) {
   console.error('\nUNEXPECTED:', err);

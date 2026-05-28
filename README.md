@@ -34,13 +34,18 @@ Get your API key at [mobileproxy.space/user.html?api](https://mobileproxy.space/
 
 ## Available tools (MVP)
 
-| Tool | Description |
-|---|---|
-| `list_proxies` | List all proxies in your account, with optional filters by type/country |
-| `get_proxy_status` | Get current external IP + optional spam-list check |
-| `rotate_ip` | Force the mobile proxy to acquire a new IP from the carrier |
+| Tool | Kind | Description |
+|---|---|---|
+| `list_proxies` | read | List all proxies in your account; filter by type / id_country |
+| `get_proxy_status` | read | Current external IP for a proxy + optional spam-blacklist check |
+| `get_balance` | read | Account balance in RUB + partner payout amount if any |
+| `get_geo_list` | read | All available geo locations (geoid, ISO, free-modem count); filter by country |
+| `get_price` | read | Prices across all durations (1/3/7/14/30/60/90/180/365 d) for a country |
+| `rotate_ip` | mutating | Force the mobile proxy to grab a new carrier IP, with optional verify |
+| `change_geo` | mutating | Swap a proxy's modem to a different country/operator without re-buying |
+| `buy_proxy` | **destructive** | Purchase one or more proxies — spends real balance, ask before calling |
 
-More tools coming in v0.2.0 (`change_geo`, `buy_proxy`, `get_balance`, `get_price`, `get_geo_list`).
+All read tools cache geo/country lookups (5–60 min) to stay friendly with the ~3 req/sec per-token rate limit.
 
 ## Configuration
 

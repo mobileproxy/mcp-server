@@ -65,12 +65,85 @@ export interface ProxyIpResponse {
 }
 
 export interface ChangeIpResponse {
-  status: 'ok' | 'err';
+  status: 'ok' | 'err' | 'OK' | 'ERR' | string;
   new_ip?: string;
   message?: string;
+  code?: number;
+  rt?: string; /* rotation time in seconds */
+  proxy_id?: Stringish;
 }
 
 export interface ErrorResponse {
   status: 'err';
   message: string;
+}
+
+/** get_balance returns {status:"ok", balance:<num>, can_payout?:<num>}. */
+export interface BalanceResponse {
+  status: 'ok';
+  balance: Stringish;
+  can_payout?: Stringish;
+  [k: string]: unknown;
+}
+
+/** get_id_country returns {status:"ok", id_country:{<id>: CountryEntry}}. */
+export interface CountryEntry {
+  id_country: Stringish;
+  name: string;
+  ISO: string; /* 2-letter, e.g. "RU", "FR" */
+  modems?: Stringish; /* only when ?only_avaliable=1 */
+}
+export interface GetIdCountryResponse {
+  status: 'ok';
+  id_country: Record<string, CountryEntry>;
+}
+
+/** get_geo_list returns a raw array (no envelope). */
+export interface GeoEntry {
+  geoid: Stringish;
+  geo_caption: string; /* human-readable, localized via Accept-Language */
+  count_free: Stringish;
+  iso: string;
+  id_city: Stringish;
+}
+export type GetGeoListResponse = GeoEntry[];
+
+/** get_operators_list returns a raw array (no envelope). */
+export interface OperatorEntry {
+  operator: string;
+  count_free: Stringish;
+  id_country: Stringish;
+}
+export type GetOperatorsListResponse = OperatorEntry[];
+
+/** get_price returns {status:"ok", price:[PriceEntry,...]}. */
+export interface PriceEntry {
+  id_country: Stringish;
+  iso: string;
+  amount: Stringish;
+  country_name: string;
+  period: Stringish; /* days */
+}
+export interface GetPriceResponse {
+  status: 'ok';
+  price: PriceEntry[];
+}
+
+/** change_equipment: status='ok' on success, 'err' on full failure;
+ *  message and error are maps proxy_id → string. */
+export interface ChangeEquipmentResponse {
+  status: 'ok' | 'err';
+  message?: Record<string, string>;
+  error?: Record<string, string>;
+  checked?: Record<string, string>;
+  'ipguardian.net'?: Record<string, unknown>;
+}
+
+/** buyproxy success: {status, proxy_id:[..], amount, message, proxy_data:{<id>:Proxy}}. */
+export interface BuyProxyResponse {
+  status: 'ok';
+  proxy_id: Stringish[];
+  amount: Stringish;
+  message: string;
+  proxy_data: Record<string, Proxy>;
 }

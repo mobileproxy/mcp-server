@@ -2,7 +2,16 @@ import { retry } from '../utils/retry.js';
 import { log } from '../utils/logger.js';
 import { TtlCache } from '../cache.js';
 import { MobileProxyAPIError } from './errors.js';
-import type { ChangeIpResponse, GetMyProxyResponse, Proxy } from './types.js';
+import type {
+  ChangeIpResponse,
+  CountryEntry,
+  GetGeoListResponse,
+  GetIdCountryResponse,
+  GetMyProxyResponse,
+  GetOperatorsListResponse,
+  OperatorEntry,
+  Proxy,
+} from './types.js';
 
 export interface ApiClientConfig {
   apiKey: string;
@@ -15,8 +24,17 @@ const CHANGEIP_HOST = 'changeip.mobileproxy.space';
 export class MobileProxyAPI {
   private proxyKeyCache = new TtlCache<string, string>(60_000 * 10); /* 10min, keyed by stringified proxy_id */
   private proxyListCache = new TtlCache<string, GetMyProxyResponse>(15_000); /* short — for bursty agent calls */
+  private countryCache = new TtlCache<string, GetIdCountryResponse>(60 * 60_000); /* 1h, static-ish reference data */
+  private geoListCache = new TtlCache<string, GetGeoListResponse>(5 * 60_000); /* 5min */
+  private operatorsCache = new TtlCache<string, GetOperatorsListResponse>(60 * 60_000); /* 1h */
 
   constructor(private config: ApiClientConfig) {}
+
+  /** Bust caches that depend on the user's proxy roster (call after buy/change). */
+  invalidateProxyCaches(): void {
+    this.proxyListCache.clear();
+    this.proxyKeyCache.clear();
+  }
 
   async call<T = unknown>(
     command: string,
@@ -118,6 +136,74 @@ export class MobileProxyAPI {
     const arr: Proxy[] = Array.isArray(raw) ? (raw as Proxy[]) : [];
     this.proxyListCache.set(key, arr);
     return arr;
+  }
+
+  /**
+   * Cached fetch of the country reference table. Always loaded with
+   * only_avaliable=0 (full list) to keep the cache key simple — the
+   * "available modems" flag is a property of geo lists, not countries.
+   */
+  async getCountries(): Promise<Record<string, CountryEntry>> {
+    const cached = this.countryCache.get('all');
+    if (cached) return cached.id_country;
+    const data = await this.call<GetIdCountryResponse>('get_id_country');
+    this.countryCache.set('all', data);
+    return data.id_country;
+  }
+
+  /** Resolve an ISO 2-letter code (or numeric id) to the country's id_country. */
+  async resolveCountryId(input: string | number): Promise<number | null> {
+    if (typeof input === 'number' || /^\d+$/.test(String(input))) {
+      return Number(input);
+    }
+    const iso = String(input).toUpperCase().trim();
+    const countries = await this.getCountries();
+    for (const c of Object.values(countries)) {
+      if ((c.ISO ?? '').toUpperCase() === iso) return Number(c.id_country);
+    }
+    return null;
+  }
+
+  async getGeoList(opts: { geoid?: number } = {}): Promise<GetGeoListResponse> {
+    const key = opts.geoid !== undefined ? `geoid=${opts.geoid}` : 'all';
+    const cached = this.geoListCache.get(key);
+    if (cached) return cached;
+    const params: Record<string, number> = {};
+    if (opts.geoid !== undefined) params.geoid = opts.geoid;
+    const raw = await this.call<unknown>('get_geo_list', params);
+    const arr: GetGeoListResponse = Array.isArray(raw) ? (raw as GetGeoListResponse) : [];
+    this.geoListCache.set(key, arr);
+    return arr;
+  }
+
+  async getOperators(opts: { geoid?: number } = {}): Promise<GetOperatorsListResponse> {
+    const key = opts.geoid !== undefined ? `geoid=${opts.geoid}` : 'all';
+    const cached = this.operatorsCache.get(key);
+    if (cached) return cached;
+    const params: Record<string, number> = {};
+    if (opts.geoid !== undefined) params.geoid = opts.geoid;
+    const raw = await this.call<unknown>('get_operators_list', params);
+    const arr: GetOperatorsListResponse = Array.isArray(raw) ? (raw as GetOperatorsListResponse) : [];
+    this.operatorsCache.set(key, arr);
+    return arr;
+  }
+
+  /** Resolve an operator name (case-insensitive substring or exact) to its canonical name. */
+  async resolveOperatorName(input: string): Promise<string | null> {
+    const needle = input.toLowerCase().trim();
+    const all = await this.getOperators();
+    let exact: OperatorEntry | undefined;
+    let partial: OperatorEntry | undefined;
+    for (const op of all) {
+      const name = op.operator.toLowerCase();
+      if (name === needle) {
+        exact = op;
+        break;
+      }
+      if (!partial && name.includes(needle)) partial = op;
+    }
+    const match = exact ?? partial;
+    return match ? match.operator : null;
   }
 
   /**
