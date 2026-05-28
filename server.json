@@ -1,0 +1,50 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.mobileproxy/mcp-server",
+  "description": "Model Context Protocol server for mobileproxy.space — give Claude/Cursor/Windsurf direct control over your mobile proxies. Tools: list_proxies, get_proxy_status, get_balance, get_geo_list, get_price, rotate_ip, change_geo, buy_proxy.",
+  "repository": {
+    "url": "https://github.com/mobileproxy/mcp-server",
+    "source": "github"
+  },
+  "version": "0.1.1",
+  "packages": [
+    {
+      "registryType": "npm",
+      "identifier": "@mobileproxy/mcp-server",
+      "version": "0.1.1",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "MOBILEPROXY_API_KEY",
+          "description": "API token from https://mobileproxy.space/user.html?api",
+          "isRequired": true,
+          "format": "string",
+          "isSecret": true
+        },
+        {
+          "name": "MOBILEPROXY_API_BASE",
+          "description": "Override REST API base URL (default https://mobileproxy.space)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false
+        },
+        {
+          "name": "MOBILEPROXY_TIMEOUT_MS",
+          "description": "HTTP request timeout in milliseconds (default 30000)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false
+        },
+        {
+          "name": "MOBILEPROXY_DEBUG",
+          "description": "Set to 1 for verbose stderr logs",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": false
+        }
+      ]
+    }
+  ]
+}
