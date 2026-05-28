@@ -1,6 +1,6 @@
 {
   "name": "@mobileproxy/mcp-server",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "mcpName": "io.github.mobileproxy/mcp-server",
   "description": "Model Context Protocol server for mobileproxy.space — give Claude/Cursor/Windsurf direct control over your mobile proxies",
   "type": "module",
