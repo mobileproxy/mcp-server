@@ -1,77 +1,73 @@
 # Publishing runbook
 
-One-time setup, then `git push --tags` does the rest via GitHub Actions.
+Pushing a `v*` tag runs [.github/workflows/publish.yml](../.github/workflows/publish.yml):
 
-## One-time setup (do once per repo)
+1. **publish** — checks that the tag matches every version field, builds, runs tests,
+   publishes to npm with provenance (OIDC trusted publishing, no `NPM_TOKEN`).
+2. **registry** — publishes `server.json` to the official MCP Registry (GitHub OIDC,
+   no secret). Runs after npm because the registry checks the npm package's `mcpName`.
+3. **mcpb** — builds `mobileproxy.mcpb` (Claude Desktop one-click bundle) and attaches it
+   to a GitHub Release with generated notes.
 
-### 1. npm organization
+## One-time setup
 
-```bash
-npm login                              # log in as the org owner
-npm org create mobileproxy             # creates @mobileproxy scope (or use existing)
-```
-
-If `@mobileproxy` already exists and you're a member with publish rights,
-skip the `create` step.
-
-### 2. Create an npm automation token
-
-[npmjs.com/settings/<user>/tokens/new](https://www.npmjs.com/settings/) →
-**Automation** type → scope **`@mobileproxy/*`** (or just this package) →
-write access. Copy the token.
-
-### 3. GitHub repo
-
-```bash
-# Inside this folder
-git remote add origin git@github.com:mobileproxy/mcp-server.git
-git push -u origin main
-```
-
-If the `mobileproxy` GitHub organization doesn't exist, create it first
-([github.com/organizations/new](https://github.com/organizations/new)).
-
-### 4. Add the npm token as a GitHub secret
-
-GitHub repo → Settings → Secrets and variables → Actions → New repository
-secret:
-- Name: `NPM_TOKEN`
-- Value: the automation token from step 2
-
-(Optional) Also add `MOBILEPROXY_API_KEY` if you want CI to run smoke tests
-against the live API on PRs.
+- **npm trusted publishing:** npmjs.com → package settings → Trusted Publishing →
+  add publisher: org `mobileproxy`, repo `mcp-server`, workflow `publish.yml`.
+- **MCP Registry:** nothing to configure. The `io.github.mobileproxy/*` namespace is
+  proven by the workflow running in the `mobileproxy/mcp-server` repo.
+- **Glama:** `glama.json` in the repo root lists the maintainer (`mobileproxy`). Sign in
+  to glama.ai with that GitHub account and claim the listing.
 
 ## Each release
 
+The version lives in four places: `package.json`, `server.json` (`version` and
+`packages[0].version`) and `manifest.json`. `npm version` keeps them in sync through
+the `version` script hook, and CI refuses a tag that doesn't match.
+
 ```bash
-# 1. bump the version (creates a git tag automatically)
-npm version patch        # 0.1.0 -> 0.1.1
-# or `npm version minor` / `npm version major`
-
-# 2. push the commit and tag
-git push --follow-tags
-
-# 3. GitHub Actions runs publish.yml → npm publish --access public --provenance
-#    Watch progress at https://github.com/mobileproxy/mcp-server/actions
+npm version minor            # bumps package.json, syncs server.json + manifest.json,
+                             # commits and creates tag vX.Y.0
+git push --follow-tags       # triggers the release workflow
 ```
 
-After ~1 minute the new version shows up on npm:
-[npmjs.com/package/@mobileproxy/mcp-server](https://www.npmjs.com/package/@mobileproxy/mcp-server)
+Check the result after ~2 minutes:
 
-## Manual publish (fallback)
+```bash
+npm view @mobileproxy/mcp-server version
+curl -s "https://registry.modelcontextprotocol.io/v0/servers?search=io.github.mobileproxy/mcp-server"
+gh release view --json assets
+```
+
+Before tagging a release that touches API calls, run the live smoke test:
+
+```powershell
+$env:MOBILEPROXY_API_KEY = "..."
+npm run build; npm run smoke
+```
+
+## Manual fallback
 
 If GitHub Actions is unavailable:
 
 ```bash
 npm run build
-npm publish --access public
+npm publish --access public          # needs `npm login` as a member of @mobileproxy
+./mcp-publisher login github          # interactive device login
+./mcp-publisher publish
 ```
 
-This requires you to have run `npm login` and be a member of `@mobileproxy`.
+## Directories to keep listed
 
-## After first publish
+| Directory | How | Status |
+|---|---|---|
+| Official MCP Registry | automatic on every tag | ✅ |
+| Glama | auto-indexed from GitHub, claim via `glama.json` | claim once |
+| PulseMCP | form at pulsemcp.com | submit once |
+| mcp.so | submit form | submit once |
+| Smithery | smithery.ai, sign in with GitHub | check whether stdio servers are accepted |
 
-- Submit to MCP Registry: [registry.modelcontextprotocol.io](https://registry.modelcontextprotocol.io)
-- Replace the `SOON` badge on mobileproxy.space (`@templates/design_v2/index.tpl:~3196`)
-  with a link to `/mcp.html` or the npm package
-- Create the `/mcp.html` landing page on mobileproxy.space
+## Site follow-ups (mobileproxy.space)
+
+- Flag accounts whose API calls carry `User-Agent: @mobileproxy/mcp-server/*` as MCP users.
+- Count registrations with `utm_source=mcp` (README, docs and server error messages link with it).
+- Replace the `SOON` badge (`@templates/design_v2/index.tpl:~3196`) with a link to the npm package or a `/mcp.html` page.

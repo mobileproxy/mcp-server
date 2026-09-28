@@ -1,90 +1,108 @@
 # Installation & wiring up
 
-The MCP server is a regular Node program that listens on stdio. Any MCP-aware
-agent (Claude Code, Claude Desktop, Cursor, Windsurf, custom) can run it as a
-child process and exchange tool calls over stdio.
+The MCP server is a regular Node program that talks over stdio. Any MCP-aware
+agent (Claude Code, Claude Desktop, Cursor, Windsurf, custom) runs it as a
+child process. Get your API key at
+https://mobileproxy.space/user.html?api&utm_source=mcp&utm_medium=docs
 
-## Local development (no npm publish yet)
+## Claude Desktop — one click (recommended)
 
-```powershell
-cd C:\Users\m\Downloads\Proxy\mobileproxy-mcp-server
-node node_modules\typescript\bin\tsc   # build into dist/
+1. Download `mobileproxy.mcpb` from the
+   [latest release](https://github.com/mobileproxy/mcp-server/releases/latest).
+2. Double-click it (or drag it into Settings → Extensions).
+3. Paste your API key into the field Claude Desktop shows. It is stored in the
+   OS keychain, not in a plain config file.
+
+Claude Desktop bundles its own Node.js, so nothing else needs to be installed.
+
+### Claude Desktop — manual JSON
+
+Merge the `mcpServers` block from [examples/claude-desktop.json](examples/claude-desktop.json)
+into `%APPDATA%\Claude\claude_desktop_config.json` (Windows) or
+`~/Library/Application Support/Claude/claude_desktop_config.json` (macOS),
+replace `YOUR_API_KEY_HERE`, then fully quit and relaunch Claude Desktop
+(from the tray / menu bar, not just the window). Requires Node.js 20+.
+
+## Claude Code
+
+Personal setup — the key goes into your user config, never into a repo:
+
+```bash
+claude mcp add mobileproxy --scope user --env MOBILEPROXY_API_KEY=your_key -- npx -y @mobileproxy/mcp-server
 ```
 
-Then point your client at `dist/index.js` — see `docs/examples/`.
+Team setup — commit a `.mcp.json` like [examples/claude-code.json](examples/claude-code.json).
+It reads the key from each developer's environment via `${env:MOBILEPROXY_API_KEY}`:
 
-## Claude Code — per-project
+```powershell
+# PowerShell — permanent for the current user
+[Environment]::SetEnvironmentVariable('MOBILEPROXY_API_KEY', 'your_key', 'User')
+```
 
-1. Copy `docs/examples/claude-code.json` to the root of the project where you
-   want mobileproxy tools available, save it as `.mcp.json`.
-2. Set the API key once in your shell so the `${env:...}` substitution works:
-   ```powershell
-   # PowerShell — make it permanent in $PROFILE
-   [Environment]::SetEnvironmentVariable('MOBILEPROXY_API_KEY', 'your_key', 'User')
-   ```
-3. Start a fresh `claude` session in that folder. Claude Code prompts to
-   approve the MCP server on first run.
+```bash
+# bash / zsh — add to ~/.bashrc or ~/.zshrc
+export MOBILEPROXY_API_KEY=your_key
+```
 
-This repo ships its own `.mcp.json` at the root — run `claude` from
-`mobileproxy-mcp-server/` and the server is auto-attached for self-testing.
+Start a fresh `claude` session afterwards; it asks to approve the server on first run.
 
-## Claude Desktop — global
+## Cursor / Windsurf
 
-1. Open `%APPDATA%\Claude\claude_desktop_config.json` (create it if missing).
-2. Merge the `mcpServers` block from `docs/examples/claude-desktop.json` —
-   keep any servers you already have configured.
-3. Replace `YOUR_API_KEY_HERE` with your real token. (Claude Desktop only
-   recently started supporting `${env:...}` substitution; if it doesn't work
-   on your version, hard-code the key.)
-4. Fully restart Claude Desktop (quit from the system tray, not just close
-   the window).
+See [examples/cursor.json](examples/cursor.json). The file lives at `~/.cursor/mcp.json`
+(global) or `.cursor/mcp.json` (per workspace). These clients don't substitute
+`${env:...}`, so the key is written into the file — keep it out of git.
 
-## Cursor
+## Local development
 
-See `docs/examples/cursor.json` — same pattern, file lives at
-`~/.cursor/mcp.json` (global) or `.cursor/mcp.json` (per-workspace).
+```bash
+npm ci
+npm run build          # compiles src/ into dist/
+npm run inspector      # MCP Inspector UI against dist/index.js
+```
+
+This repo ships a `.mcp.json` that runs `./dist/index.js`, so `claude` started
+from the repo root attaches the local build for self-testing.
 
 ## Verifying
 
 Once attached, try these prompts:
 
-- *"List my proxies."* → expect `list_proxies`
-- *"What's my balance?"* → expect `get_balance`
-- *"How much would 5 proxies in Germany for a week cost?"* → expect
-  `get_price` (with `country: "DE"`, then maybe `get_geo_list` for context)
-- *"Rotate the IP on proxy 470663 and confirm the new IP."* → expect
-  `rotate_ip` with `verify: true`
-- *"Swap proxy 470663 to Turkey."* → expect `change_geo` with
-  `country: "TR"` (the agent should ask for confirmation since it mutates)
+- *"List my proxies."* → `list_proxies`
+- *"What's my balance?"* → `get_balance`
+- *"How much would 5 proxies in Germany for a week cost?"* → `get_price` with `country: "DE"`
+- *"Rotate the IP on proxy 470663 and confirm the new IP."* → `rotate_ip` with `verify: true`
+- *"Swap proxy 470663 to Turkey."* → `change_geo` with `country: "TR"` (the agent should ask first)
+- *"Which residential plans do you have and what's the price per GB?"* → `list_residential_plans`
+- *"Покажи мои прокси и смени IP на первом мобильном."* → `list_proxies`, then `rotate_ip`
 
-If the agent reaches for a different tool or asks for clarifying info you'd
-expect it to figure out from the descriptions, that's a signal to tighten
-the tool's `description` text and rebuild.
+If the agent reaches for a different tool, or asks for info it should work out
+from the descriptions, tighten that tool's `description` and rebuild.
 
 ## Caveats by client
 
-| Client | `${env:VAR}` in env block | Approval prompt | Cached child process |
+| Client | `${env:VAR}` in env block | Approval prompt | Picks up config changes |
 |---|---|---|---|
-| Claude Code CLI | ✅ substituted | yes | restart on `.mcp.json` change |
+| Claude Code CLI | ✅ substituted | yes | restart session |
 | Cowork / CCD UI | ❌ passed literally | silent in Auto-mode | restart on close-session |
-| Claude Desktop (classic) | depends on version | yes | restart of app |
-| Cursor / Windsurf | varies | yes | varies |
+| Claude Desktop (classic) | depends on version | yes | restart app |
+| Cursor / Windsurf | ❌ | yes | restart app |
 
-**Cowork-specific workaround** until DXT-packaging lands: while developing, hard-code
-`MOBILEPROXY_API_KEY` directly in `.mcp.json` and revert via `git checkout .mcp.json`
-before commit. Or set the env var system-wide via PowerShell (`[Environment]::SetEnvironmentVariable(...)`)
-and **fully quit + relaunch** the Cowork app — the variable must exist before app start.
+**Cowork / CCD:** because `${env:...}` arrives literally, either register the
+server with `claude mcp add --scope user` (key in your user config), or set the
+variable system-wide and **fully quit and relaunch** the app — the variable must
+exist before the app starts. Don't paste the key into a project `.mcp.json`:
+that file is committed.
 
 ## Troubleshooting
 
 - **`MOBILEPROXY_API_KEY environment variable is required`** in stderr →
-  the env block isn't reaching the child process. In Cowork hard-code in
-  `.mcp.json` (see above). In Claude Code CLI ensure your shell has the
-  var set before `claude` starts.
-- **`Authorization error #4`** → your API token is IP-restricted and the
-  machine running this server isn't in the allowlist. Edit the token at
+  the env block isn't reaching the child process. See the Cowork note above.
+- **`API key missing or invalid`** while the key is set → the client passed the
+  literal string `${env:MOBILEPROXY_API_KEY}`; same fix.
+- **`Authorization error #4`** → your API token is IP-restricted and this
+  machine isn't in the allowlist. Edit the token at
   https://mobileproxy.space/user.html?api .
-- **Tool list empty** → run `node dist/index.js` manually to see startup
-  errors in stderr; the MCP transport sometimes swallows them.
-- **Server reports `IP rotation failed: ...wait N seconds`** → rotation
-  has a per-proxy cooldown. Try again after the suggested delay.
+- **Tool list empty** → run `node dist/index.js` (or `npx -y @mobileproxy/mcp-server`)
+  manually to see startup errors in stderr; the MCP transport sometimes swallows them.
+- **`IP rotation failed: ...wait N seconds`** → rotation has a per-proxy
+  cooldown. Try again after the suggested delay.
