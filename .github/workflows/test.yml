@@ -19,11 +19,14 @@ jobs:
         with:
           node-version: ${{ matrix.node-version }}
           cache: 'npm'
+      - run: node scripts/version.mjs check
       - run: npm ci
       - run: npm run build
+      # Unit tests only — they never hit the live API. The live check is scripts/smoke.mjs, run by hand.
       - run: npm test
-        env:
-          # smoke.mjs uses this; CI only runs unit tests, but keep the env
-          # plumbing here so we can flip a SMOKE_TEST_KEY secret on later.
-          MOBILEPROXY_API_KEY: ${{ secrets.MOBILEPROXY_API_KEY }}
-        if: env.MOBILEPROXY_API_KEY != ''
+
+  docker:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - run: docker build -t mobileproxy-mcp .

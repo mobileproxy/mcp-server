@@ -1,8 +1,8 @@
 {
   "name": "@mobileproxy/mcp-server",
-  "version": "0.1.2",
+  "version": "0.2.0",
   "mcpName": "io.github.mobileproxy/mcp-server",
-  "description": "Model Context Protocol server for mobileproxy.space — give Claude/Cursor/Windsurf direct control over your mobile proxies",
+  "description": "Model Context Protocol server for mobileproxy.space — give Claude/Cursor/Windsurf direct control over your dedicated 4G mobile and residential proxies",
   "type": "module",
   "main": "dist/index.js",
   "bin": {
@@ -20,6 +20,7 @@
     "test": "vitest run --passWithNoTests",
     "smoke": "node scripts/smoke.mjs",
     "inspector": "npx @modelcontextprotocol/inspector node dist/index.js",
+    "version": "node scripts/version.mjs sync && git add server.json manifest.json",
     "prepublishOnly": "npm run build"
   },
   "dependencies": {
@@ -38,6 +39,11 @@
     "mcp",
     "model-context-protocol",
     "mobile-proxy",
+    "4g-proxy",
+    "residential-proxy",
+    "proxy-rotation",
+    "antidetect",
+    "multi-account",
     "claude",
     "anthropic",
     "scraping",

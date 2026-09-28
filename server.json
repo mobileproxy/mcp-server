@@ -1,17 +1,17 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.mobileproxy/mcp-server",
-  "description": "MCP server for mobileproxy.space — manage your mobile proxies from Claude, Cursor, Windsurf.",
+  "description": "Control dedicated 4G mobile and residential proxies on mobileproxy.space from AI agents.",
   "repository": {
     "url": "https://github.com/mobileproxy/mcp-server",
     "source": "github"
   },
-  "version": "0.1.2",
+  "version": "0.2.0",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "@mobileproxy/mcp-server",
-      "version": "0.1.2",
+      "version": "0.2.0",
       "transport": {
         "type": "stdio"
       },

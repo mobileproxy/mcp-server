@@ -1,10 +1,11 @@
 #!/usr/bin/env node
 /**
- * Live smoke test for the 3 MVP tools.
+ * Live smoke test against the real API. Nothing here spends money: purchases run
+ * only with estimate_only=true. It DOES rotate the IP of your first mobile proxy.
  *
  * Usage:
  *   $env:MOBILEPROXY_API_KEY = "..."
- *   node scripts/smoke.mjs
+ *   npm run build; node scripts/smoke.mjs
  *
  * This is NOT committed test data — it spawns dist/index.js as a child process
  * and talks to the real mobileproxy.space API over the same stdio transport that
@@ -41,6 +42,30 @@ const sectionDivider = (s) => console.log('\n' + '═'.repeat(60) + '\n  ' + s +
 const truncate = (s, n = 4000) => (s.length > n ? s.slice(0, n) + `\n... [truncated ${s.length - n} more chars]` : s);
 
 let exitCode = 0;
+
+/** Calls a tool, prints the result, flags failures. Returns parsed JSON or null. */
+async function call(name, args = {}, maxChars = 2000) {
+  try {
+    const res = await client.callTool({ name, arguments: args });
+    const text = res.content?.[0]?.text ?? '';
+    console.log('isError:', res.isError ?? false);
+    console.log(truncate(text || '(empty)', maxChars));
+    if (res.isError) {
+      exitCode = 1;
+      return null;
+    }
+    try {
+      return JSON.parse(text);
+    } catch {
+      return null;
+    }
+  } catch (e) {
+    console.error('TOOL ERROR:', e.message);
+    exitCode = 1;
+    return null;
+  }
+}
+
 try {
   sectionDivider('1. connect()');
   await client.connect(transport);
@@ -54,6 +79,7 @@ try {
   sectionDivider('3. callTool list_proxies (no args)');
   let firstProxyId = null;
   let firstMobileId = null;
+  let firstResidentialId = null;
   try {
     const res = await client.callTool({ name: 'list_proxies', arguments: {} });
     console.log('isError:', res.isError ?? false);
@@ -68,7 +94,9 @@ try {
           firstProxyId = Number(parsed.proxies[0].proxy_id);
           const mobile = parsed.proxies.find((p) => Number(p.proxy_type) === 0);
           if (mobile) firstMobileId = Number(mobile.proxy_id);
-          console.log(`\n>> firstProxyId=${firstProxyId}  firstMobileId=${firstMobileId}`);
+          const residential = parsed.proxies.find((p) => Number(p.proxy_type) === 3);
+          if (residential) firstResidentialId = Number(residential.proxy_id);
+          console.log(`\n>> firstProxyId=${firstProxyId}  firstMobileId=${firstMobileId}  firstResidentialId=${firstResidentialId}`);
         } else {
           console.log('>> no proxies in account (account empty?)');
         }
@@ -158,10 +186,43 @@ try {
     exitCode = 1;
   }
 
-  /* change_geo and buy_proxy intentionally skipped: change_geo has a cooldown
-     and rearranges hardware; buy_proxy spends real money. Add a manual opt-in
-     flag (e.g. SMOKE_TEST_DESTRUCTIVE=1) if you need to exercise them. */
-  sectionDivider('SKIPPED: change_geo, buy_proxy (destructive — opt-in needed)');
+  sectionDivider('9. callTool list_residential_plans');
+  const plansRes = await call('list_residential_plans', {}, 1500);
+  const firstPlanId = plansRes?.plans?.[0] ? Number(plansRes.plans[0].price_id) : null;
+  if (plansRes && !firstPlanId) {
+    console.log('>> no residential plans returned — backend endpoint may be missing');
+    exitCode = 1;
+  }
+
+  sectionDivider('10. callTool get_residential_locations (countries, then US regions)');
+  const countriesRes = await call('get_residential_locations', { type: 'countries' }, 800);
+  if (countriesRes && !(countriesRes.countries?.length > 0)) {
+    console.log('>> empty country list');
+    exitCode = 1;
+  }
+  await call('get_residential_locations', { type: 'regions', country: 'US' }, 800);
+
+  if (firstPlanId) {
+    sectionDivider(`11. callTool buy_residential (price_id=${firstPlanId}, estimate_only=true — no charge)`);
+    await call('buy_residential', { price_id: firstPlanId, num: 1, estimate_only: true }, 1200);
+  } else {
+    sectionDivider('11. buy_residential estimate — SKIPPED (no plan)');
+  }
+
+  if (firstResidentialId) {
+    sectionDivider(`12. callTool set_residential_geo (proxy_id=${firstResidentialId}, read-only)`);
+    await call('set_residential_geo', { proxy_id: firstResidentialId }, 1500);
+
+    sectionDivider(`13. callTool get_residential_traffic (proxy_id=${firstResidentialId}, days=7)`);
+    await call('get_residential_traffic', { proxy_id: firstResidentialId, days: 7 }, 1500);
+  } else {
+    sectionDivider('12–13. residential geo/traffic — SKIPPED (no residential proxy in account)');
+  }
+
+  /* change_geo, real purchases and set_residential_geo writes are intentionally skipped:
+     change_geo has a cooldown and rearranges hardware, purchases spend real money, and a
+     residential geo write rewrites the proxy login. */
+  sectionDivider('SKIPPED: change_geo, real purchases, residential geo writes');
 
   sectionDivider(`Result: ${exitCode === 0 ? 'PASS' : 'FAIL'}`);
 } catch (err) {

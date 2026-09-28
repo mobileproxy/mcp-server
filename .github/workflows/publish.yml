@@ -1,9 +1,13 @@
-name: Publish to npm
+name: Release
 
-# Uses npm OIDC trusted publishing — no NPM_TOKEN required.
-# Configure the trust on npmjs.com: package settings → Trusted Publishing →
-# Add publisher with org=mobileproxy, repo=mcp-server, workflow=publish.yml.
-# Requires npm >= 11.5.1 and Node >= 22.14, hence the explicit npm@latest install.
+# Triggered by a v* tag. Three jobs:
+#   publish  → npm, via OIDC trusted publishing (no NPM_TOKEN).
+#              Trust is configured on npmjs.com: package settings → Trusted Publishing →
+#              org=mobileproxy, repo=mcp-server, workflow=publish.yml.
+#              Requires npm >= 11.5.1 and Node >= 22.14, hence the explicit npm@latest install.
+#   registry → official MCP Registry, via GitHub OIDC. Runs after npm because the registry
+#              validates that the npm package exists and carries the matching mcpName.
+#   mcpb     → Claude Desktop one-click bundle, attached to a GitHub Release.
 
 on:
   push:
@@ -15,8 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
-      id-token: write # for OIDC + provenance
-
+      id-token: write # npm OIDC + provenance
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -24,9 +27,51 @@ jobs:
           node-version: '22'
           registry-url: 'https://registry.npmjs.org'
           cache: 'npm'
+      - name: Versions match the tag
+        run: node scripts/version.mjs check "${GITHUB_REF_NAME#v}"
       - name: Upgrade to npm 11+ (required for OIDC)
         run: npm install -g npm@latest
       - run: npm ci
       - run: npm run build
+      - run: npm test
       - run: npm publish --access public --provenance
         # No NODE_AUTH_TOKEN — the npm CLI auto-detects the GitHub OIDC environment.
+
+  registry:
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write # MCP Registry OIDC
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install mcp-publisher
+        run: |
+          curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
+      - run: ./mcp-publisher login github-oidc
+      - run: ./mcp-publisher publish
+
+  mcpb:
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write # create the GitHub Release
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+      - run: npm ci
+      - run: npm run build
+      - name: Stage bundle with production dependencies only
+        run: |
+          mkdir bundle
+          cp -r dist package.json package-lock.json manifest.json icon.png README.md LICENSE bundle/
+          (cd bundle && npm ci --omit=dev --ignore-scripts)
+      - run: npx -y @anthropic-ai/mcpb@2 validate bundle/manifest.json
+      - run: npx -y @anthropic-ai/mcpb@2 pack bundle mobileproxy.mcpb
+      - name: Create GitHub Release with the bundle
+        run: gh release create "$GITHUB_REF_NAME" mobileproxy.mcpb --title "$GITHUB_REF_NAME" --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}

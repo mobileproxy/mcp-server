@@ -1,0 +1,10 @@
+node_modules
+dist
+bundle
+*.mcpb
+.git
+.github
+docs
+.env
+.env.local
+*.log

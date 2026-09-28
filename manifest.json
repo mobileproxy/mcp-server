@@ -1,0 +1,63 @@
+{
+  "manifest_version": "0.3",
+  "name": "mobileproxy",
+  "display_name": "MobileProxy",
+  "version": "0.2.0",
+  "description": "Control dedicated 4G mobile and residential proxies on mobileproxy.space: rotate IPs, change geo, check balance, buy.",
+  "long_description": "Gives Claude direct control over your mobileproxy.space account. Each mobile proxy is a dedicated 4G/LTE modem with a real carrier IP, so one account keeps one stable IP for as long as you need: multi-account management, anti-detect browser profiles, ad verification. Rotate the IP on demand, move a proxy to another country or operator without re-buying, and manage traffic-billed residential packages. Purchases always show the price first and need your confirmation.",
+  "author": {
+    "name": "mobileproxy.space",
+    "url": "https://mobileproxy.space"
+  },
+  "homepage": "https://github.com/mobileproxy/mcp-server",
+  "support": "https://github.com/mobileproxy/mcp-server/issues",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/mobileproxy/mcp-server"
+  },
+  "license": "MIT",
+  "icon": "icon.png",
+  "keywords": ["proxy", "mobile-proxy", "4g", "residential", "antidetect", "multi-account"],
+  "server": {
+    "type": "node",
+    "entry_point": "dist/index.js",
+    "mcp_config": {
+      "command": "node",
+      "args": ["${__dirname}/dist/index.js"],
+      "env": {
+        "MOBILEPROXY_API_KEY": "${user_config.api_key}"
+      }
+    }
+  },
+  "user_config": {
+    "api_key": {
+      "type": "string",
+      "title": "API key",
+      "description": "Your token from https://mobileproxy.space/user.html?api",
+      "sensitive": true,
+      "required": true
+    }
+  },
+  "tools": [
+    { "name": "list_proxies", "description": "List your proxies with connection details" },
+    { "name": "get_proxy_status", "description": "Current external IP and optional spam-blacklist check" },
+    { "name": "get_balance", "description": "Account balance" },
+    { "name": "get_geo_list", "description": "Available locations and free modems" },
+    { "name": "get_price", "description": "Prices for every rental period in a country" },
+    { "name": "rotate_ip", "description": "Get a new carrier IP on a mobile proxy" },
+    { "name": "change_geo", "description": "Move a proxy to another country or operator" },
+    { "name": "buy_proxy", "description": "Buy mobile, server or backconnect proxies (asks first)" },
+    { "name": "list_residential_plans", "description": "Residential traffic bundles and price per GB" },
+    { "name": "get_residential_locations", "description": "Countries, regions, cities and ASNs for residential" },
+    { "name": "get_residential_traffic", "description": "Daily traffic use of a residential proxy" },
+    { "name": "set_residential_geo", "description": "Read or change residential geo and session mode" },
+    { "name": "buy_residential", "description": "Buy a residential traffic bundle (asks first)" },
+    { "name": "add_residential_traffic", "description": "Top up an existing residential package (asks first)" }
+  ],
+  "compatibility": {
+    "platforms": ["darwin", "win32", "linux"],
+    "runtimes": {
+      "node": ">=20.0.0"
+    }
+  }
+}
