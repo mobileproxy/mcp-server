@@ -1,6 +1,7 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import { MobileProxyAPI } from './api/client.js';
 import { registerTools } from './tools/index.js';
+import { VERSION } from './version.js';
 
 export interface ServerConfig {
   apiKey: string;
@@ -14,7 +15,7 @@ export function createServer(config: ServerConfig): McpServer {
 
   const server = new McpServer({
     name: 'mobileproxy',
-    version: '0.1.0',
+    version: VERSION,
   });
 
   registerTools(server, api);

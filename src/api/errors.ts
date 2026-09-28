@@ -25,7 +25,7 @@ export function toMcpError(err: unknown): McpError {
     if (msg.includes('authorization error #1') || msg.includes('authorization error #2') || msg.includes('authorization error #3')) {
       return new McpError(
         ErrorCode.InvalidParams,
-        'API key missing or invalid. Set MOBILEPROXY_API_KEY (get yours at https://mobileproxy.space/user.html?api).',
+        'API key missing or invalid. Set MOBILEPROXY_API_KEY (get yours at https://mobileproxy.space/user.html?api&utm_source=mcp&utm_medium=server).',
       );
     }
     if (msg.includes('authorization error #4')) {

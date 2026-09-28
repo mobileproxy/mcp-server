@@ -2,6 +2,7 @@ import { retry } from '../utils/retry.js';
 import { log } from '../utils/logger.js';
 import { TtlCache } from '../cache.js';
 import { MobileProxyAPIError } from './errors.js';
+import { VERSION } from '../version.js';
 import type {
   ChangeIpResponse,
   CountryEntry,
@@ -57,7 +58,8 @@ export class MobileProxyAPI {
             headers: {
               Authorization: `Bearer ${this.config.apiKey}`,
               'Accept-Language': 'en',
-              'User-Agent': '@mobileproxy/mcp-server',
+              /* The backend flags accounts as MCP users by this prefix — keep it stable. */
+              'User-Agent': `@mobileproxy/mcp-server/${VERSION}`,
             },
             signal: ctrl.signal,
           });

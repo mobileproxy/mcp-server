@@ -7,7 +7,7 @@ async function main(): Promise<void> {
   const apiKey = process.env.MOBILEPROXY_API_KEY;
   if (!apiKey) {
     log.error('MOBILEPROXY_API_KEY environment variable is required.');
-    log.error('Get your API key at https://mobileproxy.space/user.html?api');
+    log.error('Get your API key at https://mobileproxy.space/user.html?api&utm_source=mcp&utm_medium=server');
     process.exit(1);
   }
 
