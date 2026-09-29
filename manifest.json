@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "mobileproxy",
   "display_name": "MobileProxy",
-  "version": "0.4.0",
+  "version": "0.4.1",
   "description": "Control dedicated 4G mobile and residential proxies on mobileproxy.space: rotate IPs, change geo, check balance, buy.",
   "long_description": "Gives Claude direct control over your mobileproxy.space account. Each mobile proxy is a dedicated 4G/LTE modem with a real carrier IP, so one account keeps one stable IP for as long as you need: multi-account management, anti-detect browser profiles, ad verification. Rotate the IP on demand, move a proxy to another country or operator without re-buying, and manage traffic-billed residential packages. Purchases always show the price first and need your confirmation.",
   "author": {
