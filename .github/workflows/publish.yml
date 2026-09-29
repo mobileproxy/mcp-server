@@ -45,6 +45,17 @@ jobs:
       id-token: write # MCP Registry OIDC
     steps:
       - uses: actions/checkout@v4
+      # npm now processes a publish asynchronously; the registry rejects versions npm doesn't serve yet.
+      - name: Wait until npm serves this version
+        run: |
+          V="${GITHUB_REF_NAME#v}"
+          for i in $(seq 1 40); do
+            if npm view "@mobileproxy/mcp-server@$V" version --prefer-online >/dev/null 2>&1; then
+              echo "npm serves $V"; exit 0
+            fi
+            echo "waiting for npm to serve $V ($i/40)"; sleep 15
+          done
+          echo "npm still doesn't serve $V after 10 minutes"; exit 1
       - name: Install mcp-publisher
         run: |
           curl -L "https://github.com/modelcontextprotocol/registry/releases/latest/download/mcp-publisher_$(uname -s | tr '[:upper:]' '[:lower:]')_$(uname -m | sed 's/x86_64/amd64/;s/aarch64/arm64/').tar.gz" | tar xz mcp-publisher
