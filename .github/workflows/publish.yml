@@ -8,6 +8,7 @@ name: Release
 #   registry → official MCP Registry, via GitHub OIDC. Runs after npm because the registry
 #              validates that the npm package exists and carries the matching mcpName.
 #   mcpb     → Claude Desktop one-click bundle, attached to a GitHub Release.
+#   docker   → image at ghcr.io/mobileproxy/mcp-server:<version> and :latest.
 
 on:
   push:
@@ -84,5 +85,24 @@ jobs:
       - run: npx -y @anthropic-ai/mcpb@2 pack bundle mobileproxy.mcpb
       - name: Create GitHub Release with the bundle
         run: gh release create "$GITHUB_REF_NAME" mobileproxy.mcpb --title "$GITHUB_REF_NAME" --generate-notes
+        env:
+          GH_TOKEN: ${{ github.token }}
+
+  docker:
+    needs: publish
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # push to ghcr.io
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build and push to GHCR
+        run: |
+          V="${GITHUB_REF_NAME#v}"
+          IMAGE=ghcr.io/mobileproxy/mcp-server
+          echo "$GH_TOKEN" | docker login ghcr.io -u "$GITHUB_ACTOR" --password-stdin
+          docker build -t "$IMAGE:$V" -t "$IMAGE:latest" .
+          docker push "$IMAGE:$V"
+          docker push "$IMAGE:latest"
         env:
           GH_TOKEN: ${{ github.token }}

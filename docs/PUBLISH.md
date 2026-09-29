@@ -8,6 +8,7 @@ Pushing a `v*` tag runs [.github/workflows/publish.yml](../.github/workflows/pub
    no secret). Runs after npm because the registry checks the npm package's `mcpName`.
 3. **mcpb** — builds `mobileproxy.mcpb` (Claude Desktop one-click bundle) and attaches it
    to a GitHub Release with generated notes.
+4. **docker** — pushes `ghcr.io/mobileproxy/mcp-server:<version>` and `:latest`.
 
 ## One-time setup
 
@@ -17,6 +18,9 @@ Pushing a `v*` tag runs [.github/workflows/publish.yml](../.github/workflows/pub
   proven by the workflow running in the `mobileproxy/mcp-server` repo.
 - **Glama:** `glama.json` in the repo root lists the maintainer (`mobileproxy`). Sign in
   to glama.ai with that GitHub account and claim the listing.
+- **GHCR:** after the first image is pushed, open github.com/users/mobileproxy/packages →
+  `mcp-server` → Package settings → Change visibility → **Public**. New container packages
+  start private, and `docker run ghcr.io/mobileproxy/mcp-server` fails for everyone else until then.
 
 ## Each release
 
