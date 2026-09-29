@@ -231,10 +231,14 @@ try {
     exitCode = 1;
   }
 
-  sectionDivider('15. callTool find_available_geo (country=RU, city=Moscow)');
-  const geoRes = await call('find_available_geo', { country: 'RU', city: 'Moscow', limit: 3 }, 1500);
+  sectionDivider('15. callTool find_available_geo (country=RU, city=Москва — Cyrillic on purpose)');
+  const geoRes = await call('find_available_geo', { country: 'RU', city: 'Москва', limit: 3 }, 1500);
   if (geoRes && !(geoRes.prices?.per_period?.length > 0)) {
     console.log('>> no mobile prices returned');
+    exitCode = 1;
+  }
+  if (geoRes && !(geoRes.matching_locations > 0)) {
+    console.log('>> Cyrillic city matched no locations');
     exitCode = 1;
   }
 
