@@ -1,0 +1,41 @@
+[Unit]
+Description=MobileProxy MCP server (remote HTTP, mcp.mpsapi.com)
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=mcp
+Group=mcp
+EnvironmentFile=/etc/mobileproxy-mcp.env
+ExecStart=/opt/node/bin/node /opt/mobileproxy-mcp/node_modules/@mobileproxy/mcp-server/dist/index.js --http
+Restart=on-failure
+RestartSec=5
+
+# Stay out of the way of p0f/tcpcheck, which the fleet depends on
+Nice=10
+MemoryMax=200M
+CPUQuota=50%
+TasksMax=64
+
+# Sandbox
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectKernelLogs=true
+ProtectControlGroups=true
+ProtectClock=true
+ProtectHostname=true
+RestrictAddressFamilies=AF_INET AF_INET6 AF_UNIX
+RestrictNamespaces=true
+RestrictRealtime=true
+LockPersonality=true
+CapabilityBoundingSet=
+SystemCallArchitectures=native
+
+[Install]
+WantedBy=multi-user.target

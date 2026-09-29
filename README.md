@@ -24,6 +24,19 @@ claude mcp add mobileproxy --scope user --env MOBILEPROXY_API_KEY=your_api_key -
 
 `--scope user` stores the key in your user config, not in the project, so it never ends up in git.
 
+### Remote server — nothing to install
+
+The hosted endpoint `https://mcp.mpsapi.com/mcp` runs the same tools (except the local-only AdsPower bridge):
+
+- **claude.ai:** Settings → Connectors → Add custom connector → URL `https://mcp.mpsapi.com/mcp` → paste your API key on the sign-in page.
+- **Claude Code:**
+  ```bash
+  claude mcp add --transport http mobileproxy https://mcp.mpsapi.com/mcp --header "Authorization: Bearer your_api_key"
+  ```
+- **Cursor:** `{"mcpServers": {"mobileproxy": {"url": "https://mcp.mpsapi.com/mcp", "headers": {"Authorization": "Bearer your_api_key"}}}}`
+
+The server keeps no copy of your key: each request carries it, or an OAuth token that contains it encrypted.
+
 ### Cursor, Windsurf, Claude Desktop (manual JSON)
 
 ```json
@@ -61,6 +74,7 @@ MCP-сервер даёт Claude, Cursor и другим AI-агентам пр�
      ```bash
      claude mcp add mobileproxy --scope user --env MOBILEPROXY_API_KEY=ваш_ключ -- npx -y @mobileproxy/mcp-server
      ```
+   - **Без установки** — удалённый сервер `https://mcp.mpsapi.com/mcp`: в claude.ai добавьте его как коннектор (ключ вводится на странице входа), в Claude Code — `claude mcp add --transport http mobileproxy https://mcp.mpsapi.com/mcp --header "Authorization: Bearer ваш_ключ"`.
 3. Попросите агента обычными словами:
    - «Всё ли в порядке с моими прокси?»
    - «Дай строку для импорта прокси 470663 в AdsPower»

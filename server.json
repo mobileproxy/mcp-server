@@ -53,5 +53,19 @@
         }
       ]
     }
+  ],
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://mcp.mpsapi.com/mcp",
+      "headers": [
+        {
+          "name": "Authorization",
+          "description": "Bearer <your mobileproxy.space API key>. Optional for clients that sign in with OAuth (claude.ai connectors).",
+          "isRequired": false,
+          "isSecret": true
+        }
+      ]
+    }
   ]
 }
