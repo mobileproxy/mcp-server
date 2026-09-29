@@ -20,7 +20,8 @@ export interface ApiClientConfig {
   timeoutMs: number;
 }
 
-const CHANGEIP_HOST = 'changeip.mobileproxy.space';
+/* The .space domain is blocked by SNI in Russia; the .rent mirror serves the same changeip backend. */
+const CHANGEIP_HOST = 'changeip.mobileproxy.rent';
 
 export class MobileProxyAPI {
   private proxyKeyCache = new TtlCache<string, string>(60_000 * 10); /* 10min, keyed by stringified proxy_id */
@@ -37,10 +38,13 @@ export class MobileProxyAPI {
     this.proxyKeyCache.clear();
   }
 
+  /** opts override the client-wide timeout and retry count for slow or non-repeatable commands. */
   async call<T = unknown>(
     command: string,
     params: Record<string, string | number | boolean> = {},
+    opts: { timeoutMs?: number; retries?: number } = {},
   ): Promise<T> {
+    const timeoutMs = opts.timeoutMs ?? this.config.timeoutMs;
     const url = new URL('/api.html', this.config.apiBase);
     url.searchParams.set('command', command);
     for (const [k, v] of Object.entries(params)) {
@@ -52,7 +56,7 @@ export class MobileProxyAPI {
     return retry(
       async () => {
         const ctrl = new AbortController();
-        const timer = setTimeout(() => ctrl.abort(), this.config.timeoutMs);
+        const timer = setTimeout(() => ctrl.abort(), timeoutMs);
         try {
           const res = await fetch(url, {
             headers: {
@@ -100,7 +104,7 @@ export class MobileProxyAPI {
           clearTimeout(timer);
         }
       },
-      { retries: 3, baseMs: 1000, retryOn: isRetryable },
+      { retries: opts.retries ?? 3, baseMs: 1000, retryOn: isRetryable },
     );
   }
 

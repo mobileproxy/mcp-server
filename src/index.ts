@@ -6,7 +6,8 @@ import { createHttpApp } from './http/app.js';
 import { isValidApiKey } from './http/oauth.js';
 import { log } from './utils/logger.js';
 
-const apiBase = process.env.MOBILEPROXY_API_BASE ?? 'https://mobileproxy.space';
+/* mpsapi.com is the API portal and stays reachable from Russia, where mobileproxy.space is blocked. */
+const apiBase = process.env.MOBILEPROXY_API_BASE ?? 'https://mpsapi.com';
 const timeoutMs = Number(process.env.MOBILEPROXY_TIMEOUT_MS) || 30_000;
 const newApi = (apiKey: string) => new MobileProxyAPI({ apiKey, apiBase, timeoutMs });
 
