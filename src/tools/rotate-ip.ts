@@ -1,22 +1,33 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { MobileProxyAPI } from '../api/client.js';
-import type { ProxyIpResponse } from '../api/types.js';
-import { toMcpError } from '../api/errors.js';
+import type { ProxyIpResponse, ResidentialChangeIpResponse } from '../api/types.js';
+import { MobileProxyAPIError, toMcpError } from '../api/errors.js';
+import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
 
-export function registerRotateIp(server: McpServer, api: MobileProxyAPI): void {
+/* residential_change_ip error codes → what the agent should tell the user or do next. */
+const RESIDENTIAL_HINTS: Record<string, string> = {
+  rotating:
+    'This residential proxy is in rotating mode, so every request already gets a new IP. ' +
+    'To hold one IP and refresh it on demand, switch it to sticky with set_residential_geo.',
+  unsupported: 'The residential provider behind this proxy does not support refreshing the IP.',
+  expired: 'This residential proxy has expired. Renew it or top it up with add_residential_traffic.',
+};
+
+export function registerRotateIp(server: McpServer, api: MobileProxyAPI, opts: { verifyDelayMs?: number } = {}): void {
+  const verifyDelayMs = opts.verifyDelayMs ?? 1500;
+
   server.registerTool(
     'rotate_ip',
     {
       title: 'Rotate proxy IP',
       description:
-        'Forces the mobile proxy to acquire a new IP address from the carrier ' +
-        '(changes the cellular session). This is THE core mobile-proxy feature — ' +
-        'agents use it between scraping requests, account creations, etc. Takes ' +
-        '~3-10 seconds and returns the new IP. Costs nothing — IP rotation is ' +
-        'included in the subscription. Set verify=true to auto-check the new IP ' +
-        'after rotation (adds ~1-2s). Only works on mobile proxies (proxy_type=0) — ' +
-        'they are the only ones with a proxy_key.',
+        'Gets a proxy a new exit IP. Mobile proxies (proxy_type=0) reconnect to the carrier and ' +
+        'pick up a new cellular IP — THE core mobile-proxy feature, used between scraping ' +
+        'requests, account creations, etc. Residential proxies (proxy_type=3) in sticky mode ' +
+        'get a new peer; in rotating mode the IP already changes on every request, so there is ' +
+        'nothing to rotate. Takes ~3-10 seconds and costs nothing. Set verify=true to check the ' +
+        'new IP afterwards (adds ~1-2s). There is a short cooldown between rotations.',
       inputSchema: {
         proxy_id: z.number().int().positive()
           .describe('proxy_id from list_proxies'),
@@ -32,19 +43,41 @@ export function registerRotateIp(server: McpServer, api: MobileProxyAPI): void {
     },
     async ({ proxy_id, verify }) => {
       try {
-        const proxyKey = await api.getProxyKey(proxy_id);
-        if (!proxyKey) {
-          throw new Error(
-            `Proxy ${proxy_id} not found in your account, or it has no proxy_key ` +
-              `(only mobile proxies support IP rotation). Use list_proxies to see available IDs.`,
-          );
-        }
+        const proxy = (await api.getMyProxy()).find((p) => String(p.proxy_id) === String(proxy_id));
+        const residential = Number(proxy?.proxy_type) === 3;
 
-        const result = await api.rotateIp(proxyKey);
+        let newIp: string | undefined;
+        let note: string | undefined;
+        if (residential) {
+          let r: ResidentialChangeIpResponse;
+          try {
+            r = await api.call<ResidentialChangeIpResponse>('residential_change_ip', { proxy_id }, { retries: 0 });
+          } catch (err) {
+            const code = err instanceof MobileProxyAPIError ? (err.response as { code?: string } | null)?.code : undefined;
+            const hint = code ? RESIDENTIAL_HINTS[code] : undefined;
+            if (hint) throw new McpError(ErrorCode.InvalidRequest, hint);
+            /* Cooldown between refreshes; the backend message carries the seconds to wait. It must
+               not fall through to toMcpError, which would read it as the API rate limit. */
+            if (code === 'too_often') throw new McpError(ErrorCode.InvalidRequest, (err as Error).message);
+            throw err;
+          }
+          newIp = r.new_ip || undefined;
+          if (r.code === 'same_ip') note = 'The provider returned the same IP this time. Call rotate_ip again.';
+        } else {
+          const proxyKey = await api.getProxyKey(proxy_id);
+          if (!proxyKey) {
+            throw new McpError(
+              ErrorCode.InvalidParams,
+              `Proxy ${proxy_id} not found in your account, or it cannot rotate (only mobile and ` +
+                'residential proxies change IP). Use list_proxies to see available IDs.',
+            );
+          }
+          newIp = (await api.rotateIp(proxyKey)).new_ip;
+        }
 
         let verified: ProxyIpResponse | null = null;
         if (verify) {
-          await sleep(1500);
+          if (verifyDelayMs > 0) await new Promise((r) => setTimeout(r, verifyDelayMs));
           try {
             verified = await api.call<ProxyIpResponse>('proxy_ip', { proxy_id });
           } catch {
@@ -53,29 +86,21 @@ export function registerRotateIp(server: McpServer, api: MobileProxyAPI): void {
         }
 
         return {
-          content: [
-            {
-              type: 'text' as const,
-              text: JSON.stringify(
-                {
-                  proxy_id,
-                  new_ip: result.new_ip,
-                  verified_ip: verified?.ip ?? null,
-                  match: verified ? verified.ip === result.new_ip : null,
-                },
-                null,
-                2,
-              ),
-            },
-          ],
+          content: [{
+            type: 'text' as const,
+            text: JSON.stringify({
+              proxy_id,
+              proxy_type: residential ? 'residential' : 'mobile',
+              new_ip: newIp ?? null,
+              verified_ip: verified?.ip ?? null,
+              match: verified && newIp ? verified.ip === newIp : null,
+              ...(note ? { note } : {}),
+            }, null, 2),
+          }],
         };
       } catch (err) {
         throw toMcpError(err);
       }
     },
   );
-}
-
-function sleep(ms: number): Promise<void> {
-  return new Promise((resolve) => setTimeout(resolve, ms));
 }

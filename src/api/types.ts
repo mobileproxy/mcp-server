@@ -122,6 +122,45 @@ export interface ResidentialAddTrafficResponse {
   message: string;
 }
 
+/** code "same_ip": the reset worked but the provider handed back the same peer — call again. */
+export interface ResidentialChangeIpResponse {
+  status: 'ok';
+  proxy_id: Stringish;
+  new_ip: string;
+  message: string;
+  code?: string;
+}
+
+/* ===== TCP fingerprint — mobile and server proxies only (types 0 and 1) ===== */
+
+export interface TcpFpProfile {
+  profile_id: number;
+  name: string;
+  description: string;
+  category: string;
+  profile_json: unknown;
+}
+export interface TcpFpProfilesResponse {
+  status: 'ok';
+  profiles: TcpFpProfile[];
+}
+
+/** errors: proxy_id → reason, for ids that were skipped (not yours, wrong type). */
+export interface TcpFpGetResponse {
+  status: 'ok';
+  proxy: { proxy_id: number; profile_id: number | null; name: string | null; profile_json: unknown }[];
+  errors?: Record<string, string>;
+}
+export interface TcpFpApplyResponse {
+  status: 'ok';
+  profile_id: number | null;
+  applied: number;
+  requested: number;
+  skipped: number;
+  message: string;
+  errors?: Record<string, string>;
+}
+
 export interface ResidentialSettingsResponse {
   status: string;
   proxy_id: Stringish;

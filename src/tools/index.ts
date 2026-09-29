@@ -18,6 +18,7 @@ import { registerFindAvailableGeo } from './find-available-geo.js';
 import { registerGetConnectionString } from './get-connection-string.js';
 import { registerRotateUntilClean } from './rotate-until-clean.js';
 import { registerAttachProxyToAdsPower } from './attach-proxy-to-adspower.js';
+import { registerTcpFingerprint } from './tcp-fingerprint.js';
 
 /** local=false on the hosted HTTP endpoint: tools that talk to apps on the user's machine are left out. */
 export function registerTools(server: McpServer, api: MobileProxyAPI, opts: { local?: boolean } = {}): void {
@@ -47,6 +48,9 @@ export function registerTools(server: McpServer, api: MobileProxyAPI, opts: { lo
   registerFindAvailableGeo(server, api);
   registerGetConnectionString(server, api);
   registerRotateUntilClean(server, api);
+
+  /* TCP fingerprint — network-level OS masking for mobile and server proxies. */
+  registerTcpFingerprint(server, api);
 
   /* Local integrations — reach apps running on the user's computer. */
   if (opts.local ?? true) registerAttachProxyToAdsPower(server, api);

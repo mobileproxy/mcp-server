@@ -24,7 +24,7 @@ describe('HTTP transport', () => {
     const client = await mcpClient(app.base, 'RAWKEY0123456789');
 
     const names = (await client.listTools()).tools.map((t) => t.name);
-    expect(names).toHaveLength(18);
+    expect(names).toHaveLength(22);
     expect(names).not.toContain('attach_proxy_to_adspower');
 
     const res = await client.callTool({ name: 'get_balance', arguments: {} });

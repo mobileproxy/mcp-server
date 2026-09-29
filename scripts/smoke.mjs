@@ -85,6 +85,7 @@ try {
   let firstProxyId = null;
   let firstMobileId = null;
   let firstResidentialId = null;
+  let firstDedicatedId = null; /* mobile or server — the only types with TCP fingerprinting */
   try {
     const res = await client.callTool({ name: 'list_proxies', arguments: {} });
     console.log('isError:', res.isError ?? false);
@@ -101,6 +102,8 @@ try {
           if (mobile) firstMobileId = Number(mobile.proxy_id);
           const residential = parsed.proxies.find((p) => Number(p.proxy_type) === 3);
           if (residential) firstResidentialId = Number(residential.proxy_id);
+          const dedicated = parsed.proxies.find((p) => [0, 1].includes(Number(p.proxy_type)));
+          if (dedicated) firstDedicatedId = Number(dedicated.proxy_id);
           console.log(`\n>> firstProxyId=${firstProxyId}  firstMobileId=${firstMobileId}  firstResidentialId=${firstResidentialId}`);
         } else {
           console.log('>> no proxies in account (account empty?)');
@@ -253,11 +256,27 @@ try {
     sectionDivider('16. get_connection_string — SKIPPED (no proxy_id)');
   }
 
-  /* change_geo, rotate_until_clean, real purchases and set_residential_geo writes are
-     intentionally skipped: change_geo has a cooldown and rearranges hardware,
-     rotate_until_clean rotates repeatedly (rotate_ip above already covers rotation),
-     purchases spend real money, and a residential geo write rewrites the proxy login. */
-  sectionDivider('SKIPPED: change_geo, rotate_until_clean, real purchases, residential geo writes');
+  sectionDivider('17. callTool list_tcp_profiles');
+  const tcpProfiles = await call('list_tcp_profiles', {}, 800);
+  if (tcpProfiles && !(tcpProfiles.count > 0)) {
+    console.log('>> no TCP fingerprint profiles returned');
+    exitCode = 1;
+  }
+
+  if (firstDedicatedId) {
+    sectionDivider(`18. callTool get_tcp_fingerprint (proxy_ids=[${firstDedicatedId}])`);
+    await call('get_tcp_fingerprint', { proxy_ids: [firstDedicatedId] }, 800);
+
+    sectionDivider(`19. callTool diagnose_tcp_fingerprint (proxy_id=${firstDedicatedId}) — up to ~45 s`);
+    await call('diagnose_tcp_fingerprint', { proxy_id: firstDedicatedId }, 1500);
+  } else {
+    sectionDivider('18–19. TCP fingerprint get/diagnose — SKIPPED (no mobile or server proxy)');
+  }
+
+  /* change_geo, rotate_until_clean, set_tcp_fingerprint, residential IP refresh, real
+     purchases and set_residential_geo writes are intentionally skipped: they change hardware,
+     network behaviour, the exit IP, money or the proxy login. rotate_ip above covers rotation. */
+  sectionDivider('SKIPPED: change_geo, rotate_until_clean, set_tcp_fingerprint, residential rotate, purchases, residential geo writes');
 
   sectionDivider(`Result: ${exitCode === 0 ? 'PASS' : 'FAIL'}`);
 } catch (err) {
