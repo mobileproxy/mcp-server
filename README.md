@@ -67,6 +67,7 @@ MCP-сервер даёт Claude, Cursor и другим AI-агентам пр�
    - «Смени IP на прокси 470663, пока не будет чистый»
    - «Где в Казани есть свободные модемы Мегафона и сколько это стоит?»
    - «Пропиши прокси 470663 в профиль AdsPower jc8y5g3» (AdsPower должен быть запущен)
+   - «Поставь прокси 470663 TCP-отпечаток Windows 11 и проверь, что видят сайты»
    - «Перенеси прокси 470663 в Турцию»
    - «Сколько стоят 5 прокси в Германии на неделю?»
 
@@ -86,6 +87,19 @@ One call for what otherwise takes a chain of the tools below. Agents pick these 
 | `rotate_until_clean` | mutating | Rotate a mobile proxy until its IP is on no spam blacklist; `keep_if_clean` keeps a good current IP |
 | `attach_proxy_to_adspower` | **destructive** | Write a proxy (and the change-IP link) straight into an AdsPower profile — *experimental, local only* |
 
+### TCP fingerprint (mobile and server proxies)
+
+Anti-fraud systems compare the OS your browser claims with the OS its TCP/IP packets reveal
+(TTL, window, MSS, option order). These tools make the proxy's network-level signature match the
+anti-detect browser profile.
+
+| Tool | Kind | Description |
+|---|---|---|
+| `list_tcp_profiles` | read | Presets to imitate: Android, iPhone, Windows, macOS, Linux… |
+| `get_tcp_fingerprint` | read | Which profile each proxy currently imitates (null = native) |
+| `set_tcp_fingerprint` | mutating | Apply a profile to up to 50 proxies; `profile_id=0` restores native. Reaches the equipment within a minute |
+| `diagnose_tcp_fingerprint` | read | What fingerprinting sites actually observe through the proxy vs. the applied profile (up to ~45 s) |
+
 `attach_proxy_to_adspower` talks to the [AdsPower Local API](https://localapi-doc-en.adspower.com/) on your computer, so AdsPower must be running with its Local API enabled. It is built from AdsPower's API documentation and covered by tests, but not yet verified against a live AdsPower install — please report problems in Issues.
 
 ### Mobile, server and backconnect proxies
@@ -97,7 +111,7 @@ One call for what otherwise takes a chain of the tools below. Agents pick these 
 | `get_balance` | read | Account balance in RUB + partner payout amount if any |
 | `get_geo_list` | read | All available geo locations (geoid, ISO, free-modem count); filter by country |
 | `get_price` | read | Prices across all durations (1/3/7/14/30/60/90/180/365 d) for a country |
-| `rotate_ip` | mutating | Force the mobile proxy to grab a new carrier IP, with optional verify |
+| `rotate_ip` | mutating | New exit IP: mobile proxies reconnect to the carrier; sticky residential proxies get a new peer. Optional verify |
 | `change_geo` | mutating | Swap a proxy's modem to a different country/operator without re-buying |
 | `buy_proxy` | **destructive** | Purchase one or more proxies — spends real balance, ask before calling |
 
@@ -131,7 +145,7 @@ All read tools cache geo/country lookups (5–60 min) to stay friendly with the 
 | Env var | Default | Purpose |
 |---|---|---|
 | `MOBILEPROXY_API_KEY` | **required** | Your API token from `/user.html?api` |
-| `MOBILEPROXY_API_BASE` | `https://mobileproxy.space` | Override for dev/staging |
+| `MOBILEPROXY_API_BASE` | `https://mpsapi.com` | API portal, reachable from Russia too; override for dev/staging |
 | `MOBILEPROXY_TIMEOUT_MS` | `30000` | HTTP request timeout |
 | `MOBILEPROXY_DEBUG` | `0` | Set to `1` for verbose stderr logs |
 | `ADSPOWER_API_URL` | `http://local.adspower.net:50325` | AdsPower Local API address, for `attach_proxy_to_adspower` |

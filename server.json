@@ -25,7 +25,7 @@
         },
         {
           "name": "MOBILEPROXY_API_BASE",
-          "description": "Override REST API base URL (default https://mobileproxy.space)",
+          "description": "Override REST API base URL (default https://mpsapi.com)",
           "isRequired": false,
           "format": "string",
           "isSecret": false

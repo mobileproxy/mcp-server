@@ -82,6 +82,8 @@ Once attached, try these prompts:
 - *"Give me proxy 470663 in a format for AdsPower import."* → `get_connection_string`
 - *"Get proxy 470663 a clean IP before I log in."* → `rotate_until_clean`
 - *"Put proxy 470663 into AdsPower profile jc8y5g3."* → `attach_proxy_to_adspower` (AdsPower must be running; the agent should ask first)
+- *"Make proxy 470663 look like Windows 11 at the TCP level and check it."* → `list_tcp_profiles`, `set_tcp_fingerprint`, then `diagnose_tcp_fingerprint` a minute later
+- *"Give my residential proxy 534302 a new IP."* → `rotate_ip` (works in sticky mode)
 - *"Покажи мои прокси и смени IP на первом мобильном."* → `list_proxies`, then `rotate_ip`
 
 If the agent reaches for a different tool, or asks for info it should work out

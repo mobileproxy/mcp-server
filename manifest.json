@@ -79,7 +79,7 @@
     },
     {
       "name": "rotate_ip",
-      "description": "Get a new carrier IP on a mobile proxy"
+      "description": "New exit IP for a mobile or sticky residential proxy"
     },
     {
       "name": "change_geo",
@@ -132,6 +132,22 @@
     {
       "name": "attach_proxy_to_adspower",
       "description": "Write a proxy and its change-IP link into an AdsPower profile (asks first)"
+    },
+    {
+      "name": "list_tcp_profiles",
+      "description": "TCP fingerprint presets: Android, iPhone, Windows, macOS, Linux"
+    },
+    {
+      "name": "get_tcp_fingerprint",
+      "description": "Which TCP fingerprint each proxy currently imitates"
+    },
+    {
+      "name": "set_tcp_fingerprint",
+      "description": "Make proxies imitate a TCP fingerprint profile (0 = native)"
+    },
+    {
+      "name": "diagnose_tcp_fingerprint",
+      "description": "What sites observe through the proxy vs. the applied profile"
     }
   ],
   "compatibility": {
