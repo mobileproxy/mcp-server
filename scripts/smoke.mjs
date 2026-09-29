@@ -219,10 +219,36 @@ try {
     sectionDivider('12–13. residential geo/traffic — SKIPPED (no residential proxy in account)');
   }
 
-  /* change_geo, real purchases and set_residential_geo writes are intentionally skipped:
-     change_geo has a cooldown and rearranges hardware, purchases spend real money, and a
-     residential geo write rewrites the proxy login. */
-  sectionDivider('SKIPPED: change_geo, real purchases, residential geo writes');
+  sectionDivider('14. callTool get_health_snapshot (check_spam=true)');
+  const health = await call('get_health_snapshot', { check_spam: true }, 1500);
+  if (health && typeof health.balance_rub !== 'number') {
+    console.log('>> balance_rub missing or not a number');
+    exitCode = 1;
+  }
+
+  sectionDivider('15. callTool find_available_geo (country=RU, city=Moscow)');
+  const geoRes = await call('find_available_geo', { country: 'RU', city: 'Moscow', limit: 3 }, 1500);
+  if (geoRes && !(geoRes.prices?.per_period?.length > 0)) {
+    console.log('>> no mobile prices returned');
+    exitCode = 1;
+  }
+
+  if (firstProxyId) {
+    sectionDivider(`16. callTool get_connection_string (proxy_id=${firstProxyId})`);
+    const conn = await call('get_connection_string', { proxy_id: firstProxyId }, 400);
+    if (conn && !/^(http|socks5):\/\//.test(conn.http_url ?? '')) {
+      console.log('>> http_url is not a proxy URL');
+      exitCode = 1;
+    }
+  } else {
+    sectionDivider('16. get_connection_string — SKIPPED (no proxy_id)');
+  }
+
+  /* change_geo, rotate_until_clean, real purchases and set_residential_geo writes are
+     intentionally skipped: change_geo has a cooldown and rearranges hardware,
+     rotate_until_clean rotates repeatedly (rotate_ip above already covers rotation),
+     purchases spend real money, and a residential geo write rewrites the proxy login. */
+  sectionDivider('SKIPPED: change_geo, rotate_until_clean, real purchases, residential geo writes');
 
   sectionDivider(`Result: ${exitCode === 0 ? 'PASS' : 'FAIL'}`);
 } catch (err) {

@@ -14,6 +14,8 @@ export type Stringish = string | number;
 /** 0=mobile, 1=server, 2=backconnect, 3=residential. */
 export type ProxyType = 0 | 1 | 2 | 3;
 
+export const PROXY_TYPE_NAMES: Record<number, string> = { 0: 'mobile', 1: 'server', 2: 'backconnect', 3: 'residential' };
+
 export interface Proxy {
   proxy_id: Stringish;
   proxy_type: ProxyType;
@@ -134,6 +136,13 @@ export interface ResidentialSettingsResponse {
   socks5: string;
 }
 
+/** Present only with check_spam=true. found=false means the IP is on no blacklist. */
+export interface IpGuardianResult {
+  ip: string;
+  found: boolean;
+  sources: unknown[];
+}
+
 /**
  * proxy_ip returns {ip, status:'OK'|'NULL IP'|'IP = SERVER IP', 'ipguardian.net':...}.
  * NB: the `status` field here is the IP-quality result, NOT the API success flag.
@@ -141,7 +150,7 @@ export interface ResidentialSettingsResponse {
 export interface ProxyIpResponse {
   ip: string;
   status: string;
-  'ipguardian.net'?: unknown;
+  'ipguardian.net'?: IpGuardianResult;
   [k: string]: unknown;
 }
 
@@ -204,6 +213,7 @@ export interface PriceEntry {
   amount: Stringish;
   country_name: string;
   period: Stringish; /* days */
+  type?: Stringish; /* proxy type the price applies to (0 = mobile) */
 }
 export interface GetPriceResponse {
   status: 'ok';

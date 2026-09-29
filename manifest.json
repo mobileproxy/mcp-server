@@ -52,7 +52,11 @@
     { "name": "get_residential_traffic", "description": "Daily traffic use of a residential proxy" },
     { "name": "set_residential_geo", "description": "Read or change residential geo and session mode" },
     { "name": "buy_residential", "description": "Buy a residential traffic bundle (asks first)" },
-    { "name": "add_residential_traffic", "description": "Top up an existing residential package (asks first)" }
+    { "name": "add_residential_traffic", "description": "Top up an existing residential package (asks first)" },
+    { "name": "get_health_snapshot", "description": "What needs attention: expiring proxies, low traffic, blacklisted IPs" },
+    { "name": "find_available_geo", "description": "Free modems, operators and prices for a country or city in one call" },
+    { "name": "get_connection_string", "description": "Ready-to-paste proxy URLs, anti-detect import line and change-IP link" },
+    { "name": "rotate_until_clean", "description": "Rotate a mobile proxy until its IP is on no blacklist" }
   ],
   "compatibility": {
     "platforms": ["darwin", "win32", "linux"],

@@ -13,6 +13,10 @@ import { registerResidentialLocations } from './residential-locations.js';
 import { registerResidentialTraffic } from './residential-traffic.js';
 import { registerResidentialGeo } from './residential-geo.js';
 import { registerResidentialBuy, registerResidentialAddTraffic } from './residential-buy.js';
+import { registerGetHealthSnapshot } from './get-health-snapshot.js';
+import { registerFindAvailableGeo } from './find-available-geo.js';
+import { registerGetConnectionString } from './get-connection-string.js';
+import { registerRotateUntilClean } from './rotate-until-clean.js';
 
 export function registerTools(server: McpServer, api: MobileProxyAPI): void {
   /* Read-only / cheap */
@@ -35,4 +39,10 @@ export function registerTools(server: McpServer, api: MobileProxyAPI): void {
   registerResidentialGeo(server, api);
   registerResidentialBuy(server, api);
   registerResidentialAddTraffic(server, api);
+
+  /* Agent workflows — one call for what otherwise takes a chain of the tools above. */
+  registerGetHealthSnapshot(server, api);
+  registerFindAvailableGeo(server, api);
+  registerGetConnectionString(server, api);
+  registerRotateUntilClean(server, api);
 }

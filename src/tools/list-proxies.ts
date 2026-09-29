@@ -4,17 +4,9 @@ import type { MobileProxyAPI } from '../api/client.js';
 import type { Proxy, ProxyType } from '../api/types.js';
 import { toMcpError } from '../api/errors.js';
 import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
+import { parseMskDateTime } from '../utils/datetime.js';
 
 const TYPE_MAP: Record<string, ProxyType> = { mobile: 0, server: 1, backconnect: 2, residential: 3 };
-
-/**
- * MySQL DATETIME "YYYY-MM-DD HH:MM:SS" → epoch ms. Treated as UTC for a stable
- * comparison; a ±3h skew vs the server's MSK timezone is harmless for "is this
- * proxy expired" checks since proxies live for days/weeks/months.
- */
-function parseDateTime(s: string): number {
-  return Date.parse(s.replace(' ', 'T') + 'Z');
-}
 
 export function registerListProxies(server: McpServer, api: MobileProxyAPI): void {
   server.registerTool(
@@ -63,7 +55,7 @@ export function registerListProxies(server: McpServer, api: MobileProxyAPI): voi
         if (active_only) {
           const nowMs = Date.now();
           items = items.filter((p) => {
-            const exp = parseDateTime(p.proxy_exp);
+            const exp = parseMskDateTime(p.proxy_exp);
             return Number.isFinite(exp) ? exp > nowMs : true; /* keep if unparseable */
           });
         }
