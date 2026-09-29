@@ -5,6 +5,8 @@ bundle
 .git
 .github
 docs
+deploy
+tests
 .env
 .env.local
 *.log

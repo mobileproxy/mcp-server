@@ -66,6 +66,7 @@ MCP-сервер даёт Claude, Cursor и другим AI-агентам пр�
    - «Дай строку для импорта прокси 470663 в AdsPower»
    - «Смени IP на прокси 470663, пока не будет чистый»
    - «Где в Казани есть свободные модемы Мегафона и сколько это стоит?»
+   - «Пропиши прокси 470663 в профиль AdsPower jc8y5g3» (AdsPower должен быть запущен)
    - «Перенеси прокси 470663 в Турцию»
    - «Сколько стоят 5 прокси в Германии на неделю?»
 
@@ -83,6 +84,9 @@ One call for what otherwise takes a chain of the tools below. Agents pick these 
 | `find_available_geo` | read | Where free modems are in a country or city, which operators have them, and prices per period |
 | `get_connection_string` | read | `http://` / `socks5://` URLs, a `host:port:login:password` line for AdsPower, Dolphin Anty, Multilogin, GoLogin, a curl test, and the change-IP link |
 | `rotate_until_clean` | mutating | Rotate a mobile proxy until its IP is on no spam blacklist; `keep_if_clean` keeps a good current IP |
+| `attach_proxy_to_adspower` | **destructive** | Write a proxy (and the change-IP link) straight into an AdsPower profile — *experimental, local only* |
+
+`attach_proxy_to_adspower` talks to the [AdsPower Local API](https://localapi-doc-en.adspower.com/) on your computer, so AdsPower must be running with its Local API enabled. It is built from AdsPower's API documentation and covered by tests, but not yet verified against a live AdsPower install — please report problems in Issues.
 
 ### Mobile, server and backconnect proxies
 
@@ -130,6 +134,16 @@ All read tools cache geo/country lookups (5–60 min) to stay friendly with the 
 | `MOBILEPROXY_API_BASE` | `https://mobileproxy.space` | Override for dev/staging |
 | `MOBILEPROXY_TIMEOUT_MS` | `30000` | HTTP request timeout |
 | `MOBILEPROXY_DEBUG` | `0` | Set to `1` for verbose stderr logs |
+| `ADSPOWER_API_URL` | `http://local.adspower.net:50325` | AdsPower Local API address, for `attach_proxy_to_adspower` |
+| `ADSPOWER_API_KEY` | unset | Only if AdsPower's Local API has security verification on |
+
+### Running as a remote HTTP server
+
+`npx -y @mobileproxy/mcp-server --http` (or the Docker image with `--http`) serves MCP over
+Streamable HTTP at `/mcp`. It is stateless and holds no key of its own: clients send their
+API key as `Authorization: Bearer …`, and with `MOBILEPROXY_OAUTH_SECRET` set it also acts as an
+OAuth 2.1 server for claude.ai connectors. See [deploy/README.md](deploy/README.md) for the
+Docker + nginx setup and every setting.
 
 ## Client compatibility
 

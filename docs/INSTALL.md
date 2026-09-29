@@ -63,6 +63,10 @@ npm run inspector      # MCP Inspector UI against dist/index.js
 This repo ships a `.mcp.json` that runs `./dist/index.js`, so `claude` started
 from the repo root attaches the local build for self-testing.
 
+Remote mode locally: `node dist/index.js --http` listens on `http://localhost:8080/mcp`;
+`MCP_URL=http://localhost:8080/mcp npm run smoke` runs the live checks over HTTP.
+Deployment: [deploy/README.md](../deploy/README.md).
+
 ## Verifying
 
 Once attached, try these prompts:
@@ -77,6 +81,7 @@ Once attached, try these prompts:
 - *"Where in Kazan are free MegaFon modems and what do they cost?"* → `find_available_geo`
 - *"Give me proxy 470663 in a format for AdsPower import."* → `get_connection_string`
 - *"Get proxy 470663 a clean IP before I log in."* → `rotate_until_clean`
+- *"Put proxy 470663 into AdsPower profile jc8y5g3."* → `attach_proxy_to_adspower` (AdsPower must be running; the agent should ask first)
 - *"Покажи мои прокси и смени IP на первом мобильном."* → `list_proxies`, then `rotate_ip`
 
 If the agent reaches for a different tool, or asks for info it should work out

@@ -16,5 +16,7 @@ COPY package.json package-lock.json ./
 RUN npm ci --omit=dev --ignore-scripts
 COPY --from=build /app/dist ./dist
 USER node
-# stdio transport: run with `docker run -i --rm -e MOBILEPROXY_API_KEY=... <image>`
+# stdio (default): docker run -i --rm -e MOBILEPROXY_API_KEY=... <image>
+# remote HTTP:     docker run -p 8080:8080 -e HOST=0.0.0.0 <image> --http   (see deploy/README.md)
+EXPOSE 8080
 ENTRYPOINT ["node", "dist/index.js"]
