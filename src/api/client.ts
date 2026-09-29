@@ -57,6 +57,7 @@ export class MobileProxyAPI {
           const res = await fetch(url, {
             headers: {
               Authorization: `Bearer ${this.config.apiKey}`,
+              /* Must be exactly "en": the backend returns Russian captions for "en-US", "EN" or a q-list. */
               'Accept-Language': 'en',
               /* The backend flags accounts as MCP users by this prefix — keep it stable. */
               'User-Agent': `@mobileproxy/mcp-server/${VERSION}`,

@@ -13,7 +13,7 @@ const OPERATORS: Record<string, unknown[]> = {
   '12': [{ operator: 'beeline', count_free: '10', id_country: '1' }],
 };
 
-function stubApi(country: number | null = 1) {
+function stubApi(country: number | null = 1, geo: unknown[] = GEO) {
   const call = vi.fn(async (cmd: string, params: Record<string, unknown> = {}) => {
     if (cmd === 'get_operators_list') return OPERATORS[String(params.geoid)] ?? [];
     if (cmd === 'get_price') {
@@ -30,7 +30,7 @@ function stubApi(country: number | null = 1) {
   });
   return {
     call,
-    getGeoList: vi.fn(async () => GEO),
+    getGeoList: vi.fn(async () => geo),
     resolveCountryId: vi.fn(async () => country),
   };
 }
@@ -45,6 +45,20 @@ describe('find_available_geo', () => {
       { geoid: 10, location: 'Russia, Kazan', free_modems: 3, operators: [{ operator: 'megafone', free_modems: 2 }] },
     ]);
     expect(r.json.matching_locations).toBe(1);
+  });
+
+  it('matches a Latin city against Russian captions and a Cyrillic operator against API ids', async () => {
+    const ruGeo = [
+      { geoid: '10', geo_caption: 'Россия, Казань', count_free: '3', iso: 'RU', id_city: '5' },
+      { geoid: '12', geo_caption: 'Россия, Москва', count_free: '10', iso: 'RU', id_city: '1' },
+    ];
+    const r = await run(stubApi(1, ruGeo), { country: 'RU', city: 'Kazan', operator: 'Мегафон' });
+    expect(r.json.locations).toEqual([
+      { geoid: 10, location: 'Россия, Казань', free_modems: 3, operators: [{ operator: 'megafone', free_modems: 2 }] },
+    ]);
+
+    const m = await run(stubApi(), { country: 'RU', city: 'Москва' });
+    expect(m.json.locations.map((l: { geoid: number }) => l.geoid)).toEqual([12]);
   });
 
   it('keeps only locations where the requested operator has free modems', async () => {

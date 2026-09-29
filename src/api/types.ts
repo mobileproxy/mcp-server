@@ -191,7 +191,7 @@ export interface GetIdCountryResponse {
 /** get_geo_list returns a raw array (no envelope). */
 export interface GeoEntry {
   geoid: Stringish;
-  geo_caption: string; /* human-readable, localized via Accept-Language */
+  geo_caption: string; /* human-readable; English only for Accept-Language exactly "en", and not always then */
   count_free: Stringish;
   iso: string;
   id_city: Stringish;
