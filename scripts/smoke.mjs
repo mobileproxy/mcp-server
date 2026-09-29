@@ -7,12 +7,13 @@
  *   $env:MOBILEPROXY_API_KEY = "..."
  *   npm run build; node scripts/smoke.mjs
  *
- * This is NOT committed test data — it spawns dist/index.js as a child process
- * and talks to the real mobileproxy.space API over the same stdio transport that
- * Claude Desktop / Code would use.
+ * By default it spawns dist/index.js over stdio, the way Claude Desktop / Code do.
+ * Set MCP_URL (e.g. https://mcp.mobileproxy.space/mcp) to run the same checks against
+ * a remote HTTP deployment; the key is then sent as the Bearer token.
  */
 import { Client } from '@modelcontextprotocol/sdk/client/index.js';
 import { StdioClientTransport } from '@modelcontextprotocol/sdk/client/stdio.js';
+import { StreamableHTTPClientTransport } from '@modelcontextprotocol/sdk/client/streamableHttp.js';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve } from 'node:path';
 
@@ -25,16 +26,20 @@ if (!apiKey) {
   process.exit(2);
 }
 
-const transport = new StdioClientTransport({
-  command: process.execPath,
-  args: [serverPath],
-  env: {
-    ...process.env,
-    MOBILEPROXY_API_KEY: apiKey,
-    MOBILEPROXY_DEBUG: '1',
-  },
-  stderr: 'inherit', /* see server logs */
-});
+const transport = process.env.MCP_URL
+  ? new StreamableHTTPClientTransport(new URL(process.env.MCP_URL), {
+      requestInit: { headers: { Authorization: `Bearer ${apiKey}` } },
+    })
+  : new StdioClientTransport({
+      command: process.execPath,
+      args: [serverPath],
+      env: {
+        ...process.env,
+        MOBILEPROXY_API_KEY: apiKey,
+        MOBILEPROXY_DEBUG: '1',
+      },
+      stderr: 'inherit', /* see server logs */
+    });
 
 const client = new Client({ name: 'smoke', version: '0.0.1' });
 
