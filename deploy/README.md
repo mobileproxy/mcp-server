@@ -30,11 +30,14 @@ Keep `MOBILEPROXY_OAUTH_SECRET` stable: changing it signs everyone out of claude
 
 ## 3. nginx + TLS
 
+`nginx.conf` here is HTTP-only on purpose: a 443 block that points at a certificate which
+doesn't exist yet would make `nginx -t` fail before certbot can issue it.
+
 ```bash
 cp nginx.conf /etc/nginx/sites-available/mcp.mobileproxy.space   # from this folder
 ln -s /etc/nginx/sites-available/mcp.mobileproxy.space /etc/nginx/sites-enabled/
-certbot certonly --nginx -d mcp.mobileproxy.space
 nginx -t && systemctl reload nginx
+certbot --nginx -d mcp.mobileproxy.space --redirect             # adds TLS and the redirect
 curl -s https://mcp.mobileproxy.space/healthz
 curl -s https://mcp.mobileproxy.space/.well-known/oauth-authorization-server
 ```
