@@ -1,16 +1,61 @@
 import { z } from 'zod';
 import type { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import type { MobileProxyAPI } from '../api/client.js';
-import { PROXY_TYPE_NAMES, type ResidentialSettingsResponse } from '../api/types.js';
+import { PROXY_TYPE_NAMES, type Proxy, type ResidentialSettingsResponse } from '../api/types.js';
 import { toMcpError } from '../api/errors.js';
 import { McpError, ErrorCode } from '@modelcontextprotocol/sdk/types.js';
 
-interface Endpoint {
+export interface Endpoint {
   host: string;
   httpPort: string;
   socks5Port: string;
   login: string;
   pass: string;
+}
+
+export interface ResolvedProxy {
+  proxy: Proxy;
+  type: number;
+  endpoint: Endpoint;
+}
+
+/** Finds a proxy in the account and returns the credentials a client should connect with right now. */
+export async function resolveEndpoint(api: MobileProxyAPI, proxyId: number): Promise<ResolvedProxy> {
+  const list = await api.getMyProxy();
+  const proxy = list.find((x) => String(x.proxy_id) === String(proxyId));
+  if (!proxy) {
+    throw new McpError(ErrorCode.InvalidParams, `Proxy ${proxyId} not found in your account. Use list_proxies.`);
+  }
+  const type = Number(proxy.proxy_type);
+
+  if (type === 3) {
+    /* Geo targeting lives in the provider login, so the settings endpoint is the source of truth. */
+    const s = await api.call<ResidentialSettingsResponse>('residential_settings', { proxy_id: proxyId });
+    const u = new URL(s.http);
+    return {
+      proxy,
+      type,
+      endpoint: {
+        host: u.hostname,
+        httpPort: u.port,
+        socks5Port: u.port,
+        login: decodeURIComponent(u.username),
+        pass: decodeURIComponent(u.password),
+      },
+    };
+  }
+
+  return {
+    proxy,
+    type,
+    endpoint: {
+      host: proxy.proxy_hostname || String(proxy.proxy_host_ip ?? ''),
+      httpPort: String(proxy.proxy_http_port),
+      socks5Port: String(proxy.proxy_socks5_port),
+      login: proxy.proxy_login,
+      pass: proxy.proxy_pass,
+    },
+  };
 }
 
 export function formatConnection(e: Endpoint) {
@@ -45,35 +90,7 @@ export function registerGetConnectionString(server: McpServer, api: MobileProxyA
     },
     async ({ proxy_id }) => {
       try {
-        const list = await api.getMyProxy();
-        const p = list.find((x) => String(x.proxy_id) === String(proxy_id));
-        if (!p) {
-          throw new McpError(ErrorCode.InvalidParams, `Proxy ${proxy_id} not found in your account. Use list_proxies.`);
-        }
-        const type = Number(p.proxy_type);
-
-        let endpoint: Endpoint;
-        if (type === 3) {
-          /* Geo targeting lives in the provider login, so the settings endpoint is the source of truth. */
-          const s = await api.call<ResidentialSettingsResponse>('residential_settings', { proxy_id });
-          const u = new URL(s.http);
-          endpoint = {
-            host: u.hostname,
-            httpPort: u.port,
-            socks5Port: u.port,
-            login: decodeURIComponent(u.username),
-            pass: decodeURIComponent(u.password),
-          };
-        } else {
-          endpoint = {
-            host: p.proxy_hostname || String(p.proxy_host_ip ?? ''),
-            httpPort: String(p.proxy_http_port),
-            socks5Port: String(p.proxy_socks5_port),
-            login: p.proxy_login,
-            pass: p.proxy_pass,
-          };
-        }
-
+        const { proxy: p, type, endpoint } = await resolveEndpoint(api, proxy_id);
         const out: Record<string, unknown> = {
           proxy_id,
           proxy_type: PROXY_TYPE_NAMES[type] ?? String(type),

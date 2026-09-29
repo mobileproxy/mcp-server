@@ -34,7 +34,8 @@
         "${__dirname}/dist/index.js"
       ],
       "env": {
-        "MOBILEPROXY_API_KEY": "${user_config.api_key}"
+        "MOBILEPROXY_API_KEY": "${user_config.api_key}",
+        "ADSPOWER_API_KEY": "${user_config.adspower_api_key}"
       }
     }
   },
@@ -45,6 +46,14 @@
       "description": "Your token from https://mobileproxy.space/user.html?api",
       "sensitive": true,
       "required": true
+    },
+    "adspower_api_key": {
+      "type": "string",
+      "title": "AdsPower API key (optional)",
+      "description": "Only if security verification is on in AdsPower's Local API settings. Leave empty otherwise.",
+      "sensitive": true,
+      "required": false,
+      "default": ""
     }
   },
   "tools": [
@@ -119,6 +128,10 @@
     {
       "name": "rotate_until_clean",
       "description": "Rotate a mobile proxy until its IP is on no blacklist"
+    },
+    {
+      "name": "attach_proxy_to_adspower",
+      "description": "Write a proxy and its change-IP link into an AdsPower profile (asks first)"
     }
   ],
   "compatibility": {

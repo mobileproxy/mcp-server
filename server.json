@@ -43,6 +43,13 @@
           "isRequired": false,
           "format": "string",
           "isSecret": false
+        },
+        {
+          "name": "ADSPOWER_API_KEY",
+          "description": "AdsPower Local API key, only if its security verification is on (for attach_proxy_to_adspower)",
+          "isRequired": false,
+          "format": "string",
+          "isSecret": true
         }
       ]
     }
