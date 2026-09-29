@@ -39,8 +39,11 @@ describe('rotate_ip', () => {
   it('refreshes a sticky residential proxy through residential_change_ip without retries', async () => {
     const api = stubApi(() => ({ status: 'ok', proxy_id: '20', new_ip: '7.7.7.7', message: 'IP changed' }));
     const r = await run(api, { proxy_id: 20, verify: true });
-    expect(r.json).toMatchObject({ proxy_type: 'residential', new_ip: '7.7.7.7', verified_ip: '9.9.9.9', match: false });
+    expect(r.json).toMatchObject({ proxy_type: 'residential', new_ip: '7.7.7.7', verified_ip: null, match: null });
+    expect(r.json.note).toContain('Verification skipped');
     expect(api.call).toHaveBeenCalledWith('residential_change_ip', { proxy_id: 20 }, { retries: 0 });
+    /* proxy_ip ignores the sticky session for residential, so it must not be consulted */
+    expect(api.call).not.toHaveBeenCalledWith('proxy_ip', expect.anything());
     expect(api.rotateIp).not.toHaveBeenCalled();
   });
 

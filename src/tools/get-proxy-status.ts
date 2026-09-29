@@ -14,7 +14,9 @@ export function registerGetProxyStatus(server: McpServer, api: MobileProxyAPI): 
         'IP is listed in spam/abuse blacklists (Spamhaus, Stop Forum Spam, etc). ' +
         'Use to verify a fresh rotation succeeded, or to decide if you need to ' +
         'rotate again because the IP is dirty. The check_spam=true mode is slower ' +
-        '(~3s extra) but is the only way to assess IP quality.',
+        '(~3s extra) but is the only way to assess IP quality. For residential proxies the ' +
+        'check does not go through the sticky session and returns a different pool IP each time, ' +
+        'so it says nothing about the IP a sticky session is using.',
       inputSchema: {
         proxy_id: z.number().int().positive()
           .describe('proxy_id from list_proxies'),

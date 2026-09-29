@@ -76,7 +76,13 @@ export function registerRotateIp(server: McpServer, api: MobileProxyAPI, opts: {
         }
 
         let verified: ProxyIpResponse | null = null;
-        if (verify) {
+        if (verify && residential) {
+          /* proxy_ip does not go through the sticky session for residential proxies — it returns
+             a different pool IP on every call — so comparing against it would always "fail". */
+          note = [note, 'Verification skipped: the IP check does not follow sticky residential sessions; new_ip comes from the provider.']
+            .filter(Boolean)
+            .join(' ');
+        } else if (verify) {
           if (verifyDelayMs > 0) await new Promise((r) => setTimeout(r, verifyDelayMs));
           try {
             verified = await api.call<ProxyIpResponse>('proxy_ip', { proxy_id });
