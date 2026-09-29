@@ -2,7 +2,7 @@
   "manifest_version": "0.3",
   "name": "mobileproxy",
   "display_name": "MobileProxy",
-  "version": "0.2.0",
+  "version": "0.3.0",
   "description": "Control dedicated 4G mobile and residential proxies on mobileproxy.space: rotate IPs, change geo, check balance, buy.",
   "long_description": "Gives Claude direct control over your mobileproxy.space account. Each mobile proxy is a dedicated 4G/LTE modem with a real carrier IP, so one account keeps one stable IP for as long as you need: multi-account management, anti-detect browser profiles, ad verification. Rotate the IP on demand, move a proxy to another country or operator without re-buying, and manage traffic-billed residential packages. Purchases always show the price first and need your confirmation.",
   "author": {
@@ -17,13 +17,22 @@
   },
   "license": "MIT",
   "icon": "icon.png",
-  "keywords": ["proxy", "mobile-proxy", "4g", "residential", "antidetect", "multi-account"],
+  "keywords": [
+    "proxy",
+    "mobile-proxy",
+    "4g",
+    "residential",
+    "antidetect",
+    "multi-account"
+  ],
   "server": {
     "type": "node",
     "entry_point": "dist/index.js",
     "mcp_config": {
       "command": "node",
-      "args": ["${__dirname}/dist/index.js"],
+      "args": [
+        "${__dirname}/dist/index.js"
+      ],
       "env": {
         "MOBILEPROXY_API_KEY": "${user_config.api_key}"
       }
@@ -39,27 +48,85 @@
     }
   },
   "tools": [
-    { "name": "list_proxies", "description": "List your proxies with connection details" },
-    { "name": "get_proxy_status", "description": "Current external IP and optional spam-blacklist check" },
-    { "name": "get_balance", "description": "Account balance" },
-    { "name": "get_geo_list", "description": "Available locations and free modems" },
-    { "name": "get_price", "description": "Prices for every rental period in a country" },
-    { "name": "rotate_ip", "description": "Get a new carrier IP on a mobile proxy" },
-    { "name": "change_geo", "description": "Move a proxy to another country or operator" },
-    { "name": "buy_proxy", "description": "Buy mobile, server or backconnect proxies (asks first)" },
-    { "name": "list_residential_plans", "description": "Residential traffic bundles and price per GB" },
-    { "name": "get_residential_locations", "description": "Countries, regions, cities and ASNs for residential" },
-    { "name": "get_residential_traffic", "description": "Daily traffic use of a residential proxy" },
-    { "name": "set_residential_geo", "description": "Read or change residential geo and session mode" },
-    { "name": "buy_residential", "description": "Buy a residential traffic bundle (asks first)" },
-    { "name": "add_residential_traffic", "description": "Top up an existing residential package (asks first)" },
-    { "name": "get_health_snapshot", "description": "What needs attention: expiring proxies, low traffic, blacklisted IPs" },
-    { "name": "find_available_geo", "description": "Free modems, operators and prices for a country or city in one call" },
-    { "name": "get_connection_string", "description": "Ready-to-paste proxy URLs, anti-detect import line and change-IP link" },
-    { "name": "rotate_until_clean", "description": "Rotate a mobile proxy until its IP is on no blacklist" }
+    {
+      "name": "list_proxies",
+      "description": "List your proxies with connection details"
+    },
+    {
+      "name": "get_proxy_status",
+      "description": "Current external IP and optional spam-blacklist check"
+    },
+    {
+      "name": "get_balance",
+      "description": "Account balance"
+    },
+    {
+      "name": "get_geo_list",
+      "description": "Available locations and free modems"
+    },
+    {
+      "name": "get_price",
+      "description": "Prices for every rental period in a country"
+    },
+    {
+      "name": "rotate_ip",
+      "description": "Get a new carrier IP on a mobile proxy"
+    },
+    {
+      "name": "change_geo",
+      "description": "Move a proxy to another country or operator"
+    },
+    {
+      "name": "buy_proxy",
+      "description": "Buy mobile, server or backconnect proxies (asks first)"
+    },
+    {
+      "name": "list_residential_plans",
+      "description": "Residential traffic bundles and price per GB"
+    },
+    {
+      "name": "get_residential_locations",
+      "description": "Countries, regions, cities and ASNs for residential"
+    },
+    {
+      "name": "get_residential_traffic",
+      "description": "Daily traffic use of a residential proxy"
+    },
+    {
+      "name": "set_residential_geo",
+      "description": "Read or change residential geo and session mode"
+    },
+    {
+      "name": "buy_residential",
+      "description": "Buy a residential traffic bundle (asks first)"
+    },
+    {
+      "name": "add_residential_traffic",
+      "description": "Top up an existing residential package (asks first)"
+    },
+    {
+      "name": "get_health_snapshot",
+      "description": "What needs attention: expiring proxies, low traffic, blacklisted IPs"
+    },
+    {
+      "name": "find_available_geo",
+      "description": "Free modems, operators and prices for a country or city in one call"
+    },
+    {
+      "name": "get_connection_string",
+      "description": "Ready-to-paste proxy URLs, anti-detect import line and change-IP link"
+    },
+    {
+      "name": "rotate_until_clean",
+      "description": "Rotate a mobile proxy until its IP is on no blacklist"
+    }
   ],
   "compatibility": {
-    "platforms": ["darwin", "win32", "linux"],
+    "platforms": [
+      "darwin",
+      "win32",
+      "linux"
+    ],
     "runtimes": {
       "node": ">=20.0.0"
     }
