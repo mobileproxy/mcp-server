@@ -18,9 +18,9 @@ Pushing a `v*` tag runs [.github/workflows/publish.yml](../.github/workflows/pub
   proven by the workflow running in the `mobileproxy/mcp-server` repo.
 - **Glama:** `glama.json` in the repo root lists the maintainer (`mobileproxy`). Sign in
   to glama.ai with that GitHub account and claim the listing.
-- **GHCR:** after the first image is pushed, open github.com/users/mobileproxy/packages →
-  `mcp-server` → Package settings → Change visibility → **Public**. New container packages
-  start private, and `docker run ghcr.io/mobileproxy/mcp-server` fails for everyone else until then.
+- **GHCR:** the image carries the repository label, so the package inherits the public
+  repo's visibility (it was public from the first push, v0.3.0). If it ever shows private,
+  switch it at github.com/users/mobileproxy/packages → `mcp-server` → Package settings.
 
 ## Each release
 
