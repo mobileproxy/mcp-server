@@ -45,9 +45,10 @@ Claude Desktop: `~/Library/Application Support/Claude/claude_desktop_config.json
 ### Docker
 
 ```bash
-docker build -t mobileproxy-mcp https://github.com/mobileproxy/mcp-server.git
-docker run -i --rm -e MOBILEPROXY_API_KEY=your_api_key mobileproxy-mcp
+docker run -i --rm -e MOBILEPROXY_API_KEY=your_api_key ghcr.io/mobileproxy/mcp-server
 ```
+
+In an MCP client config use `"command": "docker"` with `"args": ["run", "-i", "--rm", "-e", "MOBILEPROXY_API_KEY", "ghcr.io/mobileproxy/mcp-server"]`.
 
 ## Быстрый старт по-русски
 
@@ -61,14 +62,27 @@ MCP-сервер даёт Claude, Cursor и другим AI-агентам пр�
      claude mcp add mobileproxy --scope user --env MOBILEPROXY_API_KEY=ваш_ключ -- npx -y @mobileproxy/mcp-server
      ```
 3. Попросите агента обычными словами:
-   - «Покажи мои прокси»
-   - «Смени IP на прокси 470663 и проверь новый адрес»
+   - «Всё ли в порядке с моими прокси?»
+   - «Дай строку для импорта прокси 470663 в AdsPower»
+   - «Смени IP на прокси 470663, пока не будет чистый»
+   - «Где в Казани есть свободные модемы Мегафона и сколько это стоит?»
    - «Перенеси прокси 470663 в Турцию»
    - «Сколько стоят 5 прокси в Германии на неделю?»
 
 Покупки агент всегда сначала считает в режиме `estimate_only` и просит подтверждения — деньги без вашего «да» не списываются.
 
 ## Available tools
+
+### Agent workflows
+
+One call for what otherwise takes a chain of the tools below. Agents pick these first.
+
+| Tool | Kind | Description |
+|---|---|---|
+| `get_health_snapshot` | read | What needs attention: expiring proxies (with auto-renewal state), residential packages low on traffic, optionally blacklisted IPs |
+| `find_available_geo` | read | Where free modems are in a country or city, which operators have them, and prices per period |
+| `get_connection_string` | read | `http://` / `socks5://` URLs, a `host:port:login:password` line for AdsPower, Dolphin Anty, Multilogin, GoLogin, a curl test, and the change-IP link |
+| `rotate_until_clean` | mutating | Rotate a mobile proxy until its IP is on no spam blacklist; `keep_if_clean` keeps a good current IP |
 
 ### Mobile, server and backconnect proxies
 

@@ -73,6 +73,10 @@ Once attached, try these prompts:
 - *"Rotate the IP on proxy 470663 and confirm the new IP."* → `rotate_ip` with `verify: true`
 - *"Swap proxy 470663 to Turkey."* → `change_geo` with `country: "TR"` (the agent should ask first)
 - *"Which residential plans do you have and what's the price per GB?"* → `list_residential_plans`
+- *"Is everything OK with my proxies?"* → `get_health_snapshot`
+- *"Where in Kazan are free MegaFon modems and what do they cost?"* → `find_available_geo`
+- *"Give me proxy 470663 in a format for AdsPower import."* → `get_connection_string`
+- *"Get proxy 470663 a clean IP before I log in."* → `rotate_until_clean`
 - *"Покажи мои прокси и смени IP на первом мобильном."* → `list_proxies`, then `rotate_ip`
 
 If the agent reaches for a different tool, or asks for info it should work out
