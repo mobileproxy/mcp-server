@@ -123,7 +123,13 @@ describe('OAuth 2.1', () => {
 
     const refreshed = await token(app.base, { grant_type: 'refresh_token', refresh_token: t.body.refresh_token!, client_id });
     expect(refreshed.status).toBe(200);
+    expect(refreshed.body.refresh_token).not.toBe(t.body.refresh_token);
     expect((await callBalance(app.base, refreshed.body.access_token!)).status).toBe(200);
+
+    /* Refresh tokens rotate: the old one is spent. */
+    const reused = await token(app.base, { grant_type: 'refresh_token', refresh_token: t.body.refresh_token!, client_id });
+    expect(reused.status).toBe(400);
+    expect(reused.body.error).toBe('invalid_grant');
   });
 
   it('refuses a reused authorization code', async () => {

@@ -60,15 +60,22 @@ export function createOAuth(opts: {
 }) {
   const { sealer } = opts;
 
-  /* Codes are self-contained, so single use is enforced by remembering spent ones until they expire. */
-  const spentCodes = new Map<string, number>();
-  const spend = (code: string, exp: number) => {
-    const now = Date.now() / 1000;
-    for (const [h, e] of spentCodes) if (e < now) spentCodes.delete(h);
-    const h = createHash('sha256').update(code).digest('hex');
-    if (spentCodes.has(h)) throw new InvalidGrantError('Authorization code was already used');
-    spentCodes.set(h, exp);
+  /* Codes and refresh tokens are self-contained, so single use is enforced by remembering spent
+     ones until they expire. Refresh tokens rotate on every use, as OAuth 2.1 requires for the
+     public clients Claude registers through DCR. The memory is per process: after a restart a
+     spent token would work once more, which only matters within its own lifetime. */
+  const makeSpender = (what: string) => {
+    const spent = new Map<string, number>();
+    return (token: string, exp: number) => {
+      const now = Date.now() / 1000;
+      for (const [h, e] of spent) if (e < now) spent.delete(h);
+      const h = createHash('sha256').update(token).digest('hex');
+      if (spent.has(h)) throw new InvalidGrantError(`${what} was already used`);
+      spent.set(h, exp);
+    };
   };
+  const spend = makeSpender('Authorization code');
+  const spendRefresh = makeSpender('Refresh token');
 
   const attempts = new Map<string, { count: number; reset: number }>();
   const allowAttempt = (ip: string) => {
@@ -136,6 +143,7 @@ export function createOAuth(opts: {
     async exchangeRefreshToken(client, refreshToken) {
       const t = sealer.unseal<TokenData>('refresh', refreshToken);
       if (!t || t.cid !== client.client_id) throw new InvalidGrantError('Refresh token is invalid or expired');
+      spendRefresh(refreshToken, t.exp);
       return issueTokens(t.k, t.cid, t.sc);
     },
 
