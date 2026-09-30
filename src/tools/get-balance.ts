@@ -9,10 +9,9 @@ export function registerGetBalance(server: McpServer, api: MobileProxyAPI): void
     {
       title: 'Get account balance',
       description:
-        'Returns the current account balance: main funds in RUB plus the optional ' +
-        'can_payout amount for accounts with partner status. Use this BEFORE ' +
-        'buy_proxy to confirm the user has enough funds — buy_proxy will fail ' +
-        'silently-ish with "Insufficient balance" otherwise.',
+        'Returns the current account balance in RUB, plus the can_payout amount for accounts ' +
+        'with partner status. Purchases and renewals fail with "Insufficient balance" when the ' +
+        'balance does not cover them.',
       inputSchema: {},
       annotations: { readOnlyHint: true, openWorldHint: true },
     },

@@ -54,7 +54,7 @@ describe('get_connection_string', () => {
       proxy_type: 'mobile',
       http_url: 'http://user1:p%40ss%3A1@gw.example.net:8080',
       socks5_url: 'socks5://user1:p%40ss%3A1@gw.example.net:8081',
-      antidetect_import: 'gw.example.net:8080:user1:p@ss:1',
+      import_line: 'gw.example.net:8080:user1:p@ss:1',
       change_ip_url: 'https://changeip.mobileproxy.space/?proxy_key=abc',
     });
     expect(r.json.curl_check).toContain('-x http://user1:p%40ss%3A1@gw.example.net:8080');
@@ -64,7 +64,7 @@ describe('get_connection_string', () => {
     const r = await run(20);
     expect(r.json).toMatchObject({
       proxy_type: 'residential',
-      antidetect_import: 'residential.mobileproxy.space:2333:base-zone-custom-region-us:pw',
+      import_line: 'residential.mobileproxy.space:2333:base-zone-custom-region-us:pw',
       fields: { http_port: 2333, socks5_port: 2333, login: 'base-zone-custom-region-us' },
     });
     expect(r.json.change_ip_url).toBeUndefined();

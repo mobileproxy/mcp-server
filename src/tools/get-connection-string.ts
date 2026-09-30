@@ -64,7 +64,7 @@ export function formatConnection(e: Endpoint) {
   return {
     http_url: http,
     socks5_url: `socks5://${auth}@${e.host}:${e.socks5Port}`,
-    antidetect_import: `${e.host}:${e.httpPort}:${e.login}:${e.pass}`,
+    import_line: `${e.host}:${e.httpPort}:${e.login}:${e.pass}`,
     curl_check: `curl -x ${http} https://api.ipify.org`,
     fields: { host: e.host, http_port: Number(e.httpPort), socks5_port: Number(e.socks5Port), login: e.login, password: e.pass },
   };
@@ -76,13 +76,11 @@ export function registerGetConnectionString(server: McpServer, api: MobileProxyA
     {
       title: 'Get ready-to-paste connection strings',
       description:
-        'Returns a proxy\'s credentials as ready-to-paste strings: http:// and socks5:// URLs, ' +
-        'a host:port:login:password line for bulk import into anti-detect browsers ' +
-        '(AdsPower, Dolphin Anty, Multilogin, GoLogin), a curl command to test it, and for ' +
-        'mobile proxies the change-IP link that anti-detect browsers accept in their ' +
-        '"change IP URL" field. Use it whenever the user wants to plug a proxy into a ' +
-        'browser profile, script or tool. For residential proxies the strings reflect the ' +
-        'current geo settings; call again after set_residential_geo.',
+        'Returns a proxy\'s credentials as ready-to-paste strings: http:// and socks5:// URLs, a ' +
+        'host:port:login:password line that most proxy managers and browser-profile tools import, ' +
+        'a curl command to test it, and for mobile proxies the change-IP link that such tools ' +
+        'accept as a "change IP URL". For residential proxies the strings reflect the current geo ' +
+        'settings, which set_residential_geo changes.',
       inputSchema: {
         proxy_id: z.number().int().positive().describe('proxy_id from list_proxies'),
       },

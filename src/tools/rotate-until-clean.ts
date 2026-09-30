@@ -25,14 +25,12 @@ export function registerRotateUntilClean(
     {
       title: 'Rotate until the IP is clean',
       description:
-        'Gets a mobile proxy onto an IP that is on no spam/abuse blacklist: rotates, ' +
-        'checks the new IP, and repeats up to max_attempts. Use it before registering or ' +
-        'logging into an account, instead of chaining rotate_ip + get_proxy_status by hand. ' +
-        'With keep_if_clean=true it checks the current IP first and keeps it when clean ' +
-        '(use that to verify a proxy before a session without losing a good IP). ' +
-        'Stops early with status="cooldown" and wait_seconds when the carrier refuses ' +
-        'another rotation yet — wait that long, then call again. Mobile proxies only ' +
-        '(proxy_type=0). Free of charge.',
+        'Gets a mobile proxy onto an IP that is on no spam/abuse blacklist: rotates, checks the ' +
+        'new IP and repeats up to max_attempts, in one call instead of chaining rotate_ip and ' +
+        'get_proxy_status. With keep_if_clean=true it checks the current IP first and keeps it ' +
+        'when clean. Returns status="cooldown" with wait_seconds when the carrier refuses another ' +
+        'rotation yet. Active connections drop on each rotation. Mobile proxies only ' +
+        '(proxy_type=0), free of charge.',
       inputSchema: {
         proxy_id: z.number().int().positive().describe('Mobile proxy id from list_proxies'),
         max_attempts: z.number().int().min(1).max(5).default(3)
@@ -42,7 +40,7 @@ export function registerRotateUntilClean(
       },
       annotations: {
         readOnlyHint: false,
-        destructiveHint: false,
+        destructiveHint: true,
         idempotentHint: false,
         openWorldHint: true,
       },

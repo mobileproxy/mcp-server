@@ -14,11 +14,10 @@ export function registerResidentialPlans(server: McpServer, api: MobileProxyAPI)
     {
       title: 'List residential proxy plans',
       description:
-        'Returns available residential (home ISP) proxy plans. Unlike mobile proxies, ' +
-        'residential is billed BY TRAFFIC VOLUME (GB bundles), not by rental period — ' +
-        'so use this instead of get_price when the user asks about residential. ' +
-        'The larger the bundle, the lower the price per GB. Call this before ' +
-        'buy_residential to pick a price_id and show the cost.',
+        'Returns the residential (home ISP) proxy plans with price per GB. Residential is billed ' +
+        'by traffic volume (GB bundles) rather than by rental period, so these prices replace ' +
+        'get_price for residential. Larger bundles cost less per GB. The price_id identifies a ' +
+        'plan for purchase or top-up.',
       inputSchema: {},
       annotations: { readOnlyHint: true, openWorldHint: true },
     },

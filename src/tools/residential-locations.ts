@@ -17,15 +17,12 @@ export function registerResidentialLocations(server: McpServer, api: MobileProxy
     {
       title: 'List residential geo targets',
       description:
-        'Lists geo targets available for residential proxies: countries, regions ' +
-        '(states), cities or ASNs (carriers). Codes returned here are the ONLY valid ' +
-        'values for set_residential_geo — never invent them, an unknown value is ' +
-        'silently ignored and the proxy stays in the previous location. ' +
-        'Cascade: type="countries" → type="regions" with country → type="cities" ' +
-        'with country + region. Cities require a region because large countries have thousands. ' +
-        'Entries may carry title_ru (Russian name) — use it when talking to a Russian-speaking ' +
-        'user, but always send `code` back to set_residential_geo. title_ru is absent for small ' +
-        'towns, that is expected and not an error.',
+        'Lists geo targets available for residential proxies: countries, regions (states), ' +
+        'cities or ASNs (carriers). set_residential_geo accepts only the `code` values returned ' +
+        'here; the backend ignores unknown codes and keeps the previous location. Cascade: ' +
+        'type="countries" → type="regions" with country → type="cities" with country + region ' +
+        '(cities need a region because large countries have thousands). Entries may also carry ' +
+        'title_ru, a Russian name, which is absent for small towns.',
       inputSchema: {
         type: z.enum(['countries', 'regions', 'cities', 'asns']).default('countries')
           .describe('What to list'),

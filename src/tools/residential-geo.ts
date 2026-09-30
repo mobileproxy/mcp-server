@@ -18,14 +18,12 @@ export function registerResidentialGeo(server: McpServer, api: MobileProxyAPI): 
     {
       title: 'Set residential geo and session mode',
       description:
-        'Reads or changes the geo targeting and session mode of a residential proxy. ' +
-        'Called with only proxy_id it READS the current settings; any other parameter ' +
-        'switches it to WRITE. Free and reversible. IMPORTANT: geo codes must come from ' +
-        'get_residential_locations — an unknown value is silently dropped, leaving the ' +
-        'proxy in its previous location. Changing settings REWRITES the login, so always ' +
-        'use the http/socks5 strings returned here afterwards. ' +
-        'session_mode="rotating" gives a new IP per request; "sticky" holds one IP for ' +
-        'session_time minutes (max 120).',
+        'Reads or changes the geo targeting and session mode of a residential proxy. With only ' +
+        'proxy_id it returns the current settings; any other parameter changes them. Free and ' +
+        'reversible. Geo codes come from get_residential_locations; the backend ignores unknown ' +
+        'codes and keeps the previous location. A change rewrites the provider login, and the ' +
+        'response carries the updated http/socks5 connection strings. session_mode="rotating" ' +
+        'gives a new IP per request; "sticky" holds one IP for session_time minutes (max 120).',
       inputSchema: {
         proxy_id: z.number().int().positive().describe('Residential proxy id'),
         country: z.string().length(2).optional().describe('ISO2 code from get_residential_locations'),
@@ -38,7 +36,7 @@ export function registerResidentialGeo(server: McpServer, api: MobileProxyAPI): 
       },
       annotations: {
         readOnlyHint: false,
-        destructiveHint: false,
+        destructiveHint: true,
         idempotentHint: true,
         openWorldHint: true,
       },

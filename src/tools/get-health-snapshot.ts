@@ -25,10 +25,8 @@ export function registerGetHealthSnapshot(server: McpServer, api: MobileProxyAPI
         'One-call answer to "is everything OK with my proxies?": balance, proxies expiring ' +
         'soon (flagging whether auto-renewal is on), residential packages running out of ' +
         'traffic, and optionally which dedicated IPs sit on spam blacklists. Returns only ' +
-        'what needs attention, ordered critical → warning → info. Use it at the start of a ' +
-        'session or when the user asks about account status, instead of reading ' +
-        'list_proxies by hand. check_spam=true adds one lookup per mobile/server proxy ' +
-        '(up to max_spam_checks), so it is slower.',
+        'what needs attention, ordered critical → warning → info. check_spam=true adds one ' +
+        'lookup per mobile/server proxy (up to max_spam_checks), so it is slower.',
       inputSchema: {
         expiring_within_days: z.number().int().min(0).max(30).default(3)
           .describe('Flag proxies that expire within this many days'),
@@ -77,7 +75,7 @@ export function registerGetHealthSnapshot(server: McpServer, api: MobileProxyAPI
             const limit = Number(p.residential_traffic_limit_mb);
             const left = Number(p.residential_traffic_left_mb);
             if (limit > 0 && Number.isFinite(left)) {
-              if (left <= 0) add('critical', 'traffic_exhausted', `0 MB of ${limit} MB left — top up with add_residential_traffic`);
+              if (left <= 0) add('critical', 'traffic_exhausted', `0 MB of ${limit} MB left — the package needs a traffic top-up`);
               else if ((left / limit) * 100 < low_traffic_percent) add('warning', 'low_traffic', `${left} MB of ${limit} MB left`);
             }
           }

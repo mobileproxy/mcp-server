@@ -5,10 +5,9 @@ import type { TcpFpApplyResponse, TcpFpGetResponse, TcpFpProfilesResponse } from
 import { toMcpError } from '../api/errors.js';
 
 /**
- * TCP fingerprint masks the OS at the network layer (TTL, MSS, window, TCP option order) so
- * anti-fraud systems see the same OS as the browser profile. It complements browser
- * fingerprinting in anti-detect browsers. The backend only honours it for mobile and server
- * proxies; other types are rejected per proxy in `errors`.
+ * TCP fingerprint sets the OS signature a proxy shows at the network layer (TTL, MSS, window,
+ * TCP option order), so it can match the client device the traffic represents. The backend only
+ * honours it for mobile and server proxies; other types are rejected per proxy in `errors`.
  */
 
 const proxyIds = z.array(z.number().int().positive()).min(1).max(50)
@@ -22,10 +21,9 @@ export function registerTcpFingerprint(server: McpServer, api: MobileProxyAPI): 
     {
       title: 'List TCP fingerprint profiles',
       description:
-        'Lists the TCP/IP fingerprint presets a mobile or server proxy can imitate at the network ' +
-        'layer (Android, iPhone, Windows, macOS, Linux…). Anti-fraud systems compare this OS ' +
-        'signature with the browser\'s: pick the profile that matches the anti-detect browser ' +
-        'profile, then apply it with set_tcp_fingerprint.',
+        'Lists the TCP/IP fingerprint presets a mobile or server proxy can present at the network ' +
+        'layer (Android, iPhone, Windows, macOS, Linux…), for making the OS signature of proxied ' +
+        'traffic consistent with the client device. set_tcp_fingerprint applies one.',
       inputSchema: {
         category: z.enum(['mobile', 'desktop', 'linux', 'custom']).optional().describe('Only this category'),
         include_details: z.boolean().default(false).describe('Also return the raw profile_json (TTL, MSS, window, options)'),
@@ -70,17 +68,17 @@ export function registerTcpFingerprint(server: McpServer, api: MobileProxyAPI): 
     {
       title: 'Apply a TCP fingerprint profile',
       description:
-        'Makes mobile or server proxies imitate a TCP fingerprint profile from list_tcp_profiles, ' +
-        'so the network-level OS matches the anti-detect browser profile (e.g. a Windows browser ' +
-        'profile on a Windows TCP profile). profile_id=0 restores the device\'s own fingerprint. ' +
-        'Free and reversible. Delivery to the equipment is queued and takes up to a minute, so ' +
-        'diagnose_tcp_fingerprint right after may still show the old values. Residential and ' +
-        'backconnect proxies are rejected per proxy in errors.',
+        'Makes mobile or server proxies present a TCP fingerprint profile from list_tcp_profiles, ' +
+        'so the network-level OS matches the client device (e.g. a Windows desktop on a Windows ' +
+        'profile). profile_id=0 restores the device\'s own fingerprint. Free and reversible. ' +
+        'Delivery to the equipment is queued and takes up to a minute, so diagnose_tcp_fingerprint ' +
+        'right after may still show the old values. Residential and backconnect proxies are ' +
+        'rejected per proxy in errors.',
       inputSchema: {
         proxy_ids: proxyIds,
         profile_id: z.number().int().min(0).describe('profile_id from list_tcp_profiles; 0 = back to the native fingerprint'),
       },
-      annotations: { readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+      annotations: { readOnlyHint: false, destructiveHint: true, idempotentHint: true, openWorldHint: true },
     },
     async ({ proxy_ids, profile_id }) => {
       try {
@@ -109,9 +107,8 @@ export function registerTcpFingerprint(server: McpServer, api: MobileProxyAPI): 
       title: 'Check the TCP fingerprint a site sees',
       description:
         'Sends a real request through the proxy to fingerprinting endpoints and compares what they ' +
-        'observe (TTL, window, MSS, window scale, option order, OS guess) with the applied profile. ' +
-        'Use it to confirm set_tcp_fingerprint took effect or to explain an anti-fraud flag. ' +
-        'Slow: up to ~45 seconds. Results are cached for 60 seconds per proxy. One proxy per call, ' +
+        'observe (TTL, window, MSS, window scale, option order, OS guess) with the applied profile, ' +
+        'for example to confirm set_tcp_fingerprint took effect. Slow: up to ~45 seconds. Results are cached for 60 seconds per proxy. One proxy per call, ' +
         'mobile or server only.',
       inputSchema: { proxy_id: z.number().int().positive().describe('Mobile or server proxy_id from list_proxies') },
       annotations: { readOnlyHint: true, openWorldHint: true },

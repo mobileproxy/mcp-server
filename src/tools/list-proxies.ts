@@ -15,9 +15,8 @@ export function registerListProxies(server: McpServer, api: MobileProxyAPI): voi
       title: 'List my proxies',
       description:
         'Returns all proxies owned by the authenticated user with full connection ' +
-        'details (host, port, login, password, geo, operator, expiration). ' +
-        'Use this first when the user asks anything about "my proxies", to find a ' +
-        'specific proxy, or to get a proxy_id needed for other tools. Supports ' +
+        'details (host, port, login, password, geo, operator, expiration), and the ' +
+        'proxy_id values other tools take. Supports ' +
         'filtering by type (mobile/server/backconnect/residential) and by country ' +
         '(ISO code or numeric id_country). Backconnect and residential proxies carry ' +
         'no country id, so a country filter excludes them. The server already drops ' +

@@ -17,13 +17,12 @@ export function registerFindAvailableGeo(server: McpServer, api: MobileProxyAPI)
       description:
         'Answers "where can I get a mobile proxy in <country/city> on <operator>, and what ' +
         'does it cost" in one call: locations with free modems, which operators have free ' +
-        'modems there, and mobile proxy prices per rental period. Use it before buy_proxy or ' +
-        'change_geo instead of combining get_geo_list, operator lookups and get_price. ' +
-        'city and operator accept Latin or Cyrillic ("Kazan" or "Казань", "megafon" or ' +
-        '"Мегафон") and match the start of a word in the location caption / operator name. ' +
-        'Captions are mostly English but some come back in Russian; operator names are API ' +
-        'ids such as "megafone", "beeline", "tele2", "mts". ' +
-        'Pass the returned geoid (and operator) to buy_proxy or change_geo.',
+        'modems there, and mobile proxy prices per rental period, replacing a chain of ' +
+        'get_geo_list, operator lookups and get_price. city and operator accept Latin or ' +
+        'Cyrillic ("Kazan" or "Казань", "megafon" or "Мегафон") and match the start of a word in ' +
+        'the location caption / operator name. Captions are mostly English but some come back in ' +
+        'Russian; operator names are API ids such as "megafone", "beeline", "tele2", "mts". The ' +
+        'returned geoid and operator work as inputs to the purchase and change_geo tools.',
       inputSchema: {
         country: z.string().length(2).describe('2-letter ISO country code (RU, US, TR, ...)'),
         city: z.string().optional().describe('City or district, Latin or Cyrillic, e.g. "Kazan", "Казань", "Moscow"'),
@@ -93,7 +92,7 @@ export function registerFindAvailableGeo(server: McpServer, api: MobileProxyAPI)
             ? { note: `Operator availability was checked for the ${MAX_OPERATOR_LOOKUPS} locations with the most free modems.` }
             : {}),
           prices: { currency, proxy_type: 'mobile', per_period: prices },
-          next_step: 'buy_proxy with geoid (and operator), estimate_only=true first; or change_geo to move an existing proxy.',
+          next_step: 'Pass geoid (and operator) to the purchase or quote tool for a new proxy, or to change_geo to move an existing one.',
         };
         return { content: [{ type: 'text' as const, text: JSON.stringify(out, null, 2) }] };
       } catch (err) {

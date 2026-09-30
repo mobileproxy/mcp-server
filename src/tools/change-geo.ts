@@ -34,7 +34,7 @@ export function registerChangeGeo(server: McpServer, api: MobileProxyAPI): void 
       },
       annotations: {
         readOnlyHint: false,
-        destructiveHint: false,
+        destructiveHint: true,
         idempotentHint: false,
         openWorldHint: true,
       },

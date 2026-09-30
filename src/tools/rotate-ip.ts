@@ -11,7 +11,7 @@ const RESIDENTIAL_HINTS: Record<string, string> = {
     'This residential proxy is in rotating mode, so every request already gets a new IP. ' +
     'To hold one IP and refresh it on demand, switch it to sticky with set_residential_geo.',
   unsupported: 'The residential provider behind this proxy does not support refreshing the IP.',
-  expired: 'This residential proxy has expired. Renew it or top it up with add_residential_traffic.',
+  expired: 'This residential proxy has expired; it needs a renewal or a traffic top-up first.',
 };
 
 export function registerRotateIp(server: McpServer, api: MobileProxyAPI, opts: { verifyDelayMs?: number } = {}): void {
@@ -23,11 +23,10 @@ export function registerRotateIp(server: McpServer, api: MobileProxyAPI, opts: {
       title: 'Rotate proxy IP',
       description:
         'Gets a proxy a new exit IP. Mobile proxies (proxy_type=0) reconnect to the carrier and ' +
-        'pick up a new cellular IP — THE core mobile-proxy feature, used between scraping ' +
-        'requests, account creations, etc. Residential proxies (proxy_type=3) in sticky mode ' +
-        'get a new peer; in rotating mode the IP already changes on every request, so there is ' +
-        'nothing to rotate. Takes ~3-10 seconds and costs nothing. Set verify=true to check the ' +
-        'new IP afterwards (adds ~1-2s). There is a short cooldown between rotations.',
+        'pick up a new cellular IP; residential proxies (proxy_type=3) in sticky mode get a new ' +
+        'peer, while in rotating mode the IP already changes on every request. Active connections ' +
+        'through the proxy drop. Takes ~3-10 seconds, free of charge, with a short cooldown ' +
+        'between rotations. verify=true checks the new IP afterwards (adds ~1-2s).',
       inputSchema: {
         proxy_id: z.number().int().positive()
           .describe('proxy_id from list_proxies'),
@@ -36,7 +35,7 @@ export function registerRotateIp(server: McpServer, api: MobileProxyAPI, opts: {
       },
       annotations: {
         readOnlyHint: false,
-        destructiveHint: false,
+        destructiveHint: true,
         idempotentHint: false,
         openWorldHint: true,
       },
