@@ -84,6 +84,12 @@ Once attached, try these prompts:
 - *"Put proxy 470663 into AdsPower profile jc8y5g3."* → `attach_proxy_to_adspower` (AdsPower must be running; the agent should ask first)
 - *"Make proxy 470663 look like Windows 11 at the TCP level and check it."* → `list_tcp_profiles`, `set_tcp_fingerprint`, then `diagnose_tcp_fingerprint` a minute later
 - *"Give my residential proxy 534302 a new IP."* → `rotate_ip` (works in sticky mode)
+- *"How much to renew 470663 and 470664 for a month?"* → `renew_proxies` with `estimate_only: true` (on the hosted endpoint: `quote_renewal`)
+- *"Turn off auto-renewal on all my German proxies."* → `list_proxies`, then `update_proxy_settings` (the agent should ask first)
+- *"Rotate the IP on proxy 470663 every 15 minutes."* → `update_proxy_settings` with `auto_rotate_minutes: 15`
+- *"Proxy 470663 is stuck, reboot the modem."* → `reboot_modem`
+- *"Set new passwords on proxies 470663 and 470664."* → `change_proxy_credentials`
+- *"What did I spend last week?"* → `get_account_history`
 - *"Покажи мои прокси и смени IP на первом мобильном."* → `list_proxies`, then `rotate_ip`
 
 If the agent reaches for a different tool, or asks for info it should work out

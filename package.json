@@ -44,11 +44,9 @@
     "4g-proxy",
     "residential-proxy",
     "proxy-rotation",
-    "antidetect",
-    "multi-account",
+    "geo-testing",
     "claude",
     "anthropic",
-    "scraping",
     "automation"
   ],
   "repository": {

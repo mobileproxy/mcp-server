@@ -4,7 +4,11 @@
   "display_name": "MobileProxy",
   "version": "0.5.1",
   "description": "Control dedicated 4G mobile and residential proxies on mobileproxy.space: rotate IPs, change geo, check balance, buy.",
-  "long_description": "Gives Claude direct control over your mobileproxy.space account. Each mobile proxy is a dedicated 4G/LTE modem with a real carrier IP, so one account keeps one stable IP for as long as you need: multi-account management, anti-detect browser profiles, ad verification. Rotate the IP on demand, move a proxy to another country or operator without re-buying, and manage traffic-billed residential packages. Purchases always show the price first and need your confirmation.",
+  "long_description": "Gives Claude direct control over your mobileproxy.space account. Each mobile proxy is a dedicated 4G/LTE modem with a real carrier IP that stays yours for as long as you need: test sites and apps as mobile users in a given country and network see them, check ads and localized content by geo, or monitor prices. Rotate the IP on demand, move a proxy to another country or operator without re-buying, renew and configure proxies in bulk, set the network-level OS fingerprint, and manage traffic-billed residential packages. Anything that changes a proxy or charges the balance asks for your confirmation first.",
+  "privacy_policies": [
+    "https://github.com/mobileproxy/mcp-server#privacy",
+    "https://mobileproxy.space/en/privacypolicy.html"
+  ],
   "author": {
     "name": "mobileproxy.space",
     "url": "https://mobileproxy.space"
@@ -22,8 +26,8 @@
     "mobile-proxy",
     "4g",
     "residential",
-    "antidetect",
-    "multi-account"
+    "geo-testing",
+    "ip-rotation"
   ],
   "server": {
     "type": "node",
@@ -123,7 +127,7 @@
     },
     {
       "name": "get_connection_string",
-      "description": "Ready-to-paste proxy URLs, anti-detect import line and change-IP link"
+      "description": "Ready-to-paste proxy URLs, browser-profile import line and change-IP link"
     },
     {
       "name": "rotate_until_clean",
@@ -148,6 +152,26 @@
     {
       "name": "diagnose_tcp_fingerprint",
       "description": "What sites observe through the proxy vs. the applied profile"
+    },
+    {
+      "name": "get_account_history",
+      "description": "Top-ups, purchases, renewals and refunds with receipt links"
+    },
+    {
+      "name": "update_proxy_settings",
+      "description": "Auto-renewal, comment and IP-rotation timer for many proxies at once"
+    },
+    {
+      "name": "change_proxy_credentials",
+      "description": "New login and password for one or many proxies"
+    },
+    {
+      "name": "reboot_modem",
+      "description": "Power-cycle the modem behind a stuck mobile proxy"
+    },
+    {
+      "name": "renew_proxies",
+      "description": "Extend proxies by a period (asks first)"
     }
   ],
   "compatibility": {

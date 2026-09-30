@@ -210,9 +210,13 @@ try {
   }
   await call('get_residential_locations', { type: 'regions', country: 'US' }, 800);
 
+  /* The hosted endpoint registers quote_* tools instead of purchases. */
+  const hosted = Boolean(process.env.MCP_URL);
+
   if (firstPlanId) {
-    sectionDivider(`11. callTool buy_residential (price_id=${firstPlanId}, estimate_only=true — no charge)`);
-    await call('buy_residential', { price_id: firstPlanId, num: 1, estimate_only: true }, 1200);
+    sectionDivider(`11. residential purchase quote (price_id=${firstPlanId}) — no charge`);
+    if (hosted) await call('quote_residential_purchase', { price_id: firstPlanId, num: 1 }, 1200);
+    else await call('buy_residential', { price_id: firstPlanId, num: 1, estimate_only: true }, 1200);
   } else {
     sectionDivider('11. buy_residential estimate — SKIPPED (no plan)');
   }
@@ -273,10 +277,40 @@ try {
     sectionDivider('18–19. TCP fingerprint get/diagnose — SKIPPED (no mobile or server proxy)');
   }
 
+  sectionDivider('20. callTool get_account_history (limit=5)');
+  const history = await call('get_account_history', { limit: 5 }, 1200);
+  if (history && !Array.isArray(history.operations)) {
+    console.log('>> operations is not an array');
+    exitCode = 1;
+  }
+
+  if (firstDedicatedId) {
+    sectionDivider(`21. renewal quote (proxy_ids=[${firstDedicatedId}], period_days=30) — no charge`);
+    const renewal = hosted
+      ? await call('quote_renewal', { proxy_ids: [firstDedicatedId], period_days: 30 }, 800)
+      : await call('renew_proxies', { proxy_ids: [firstDedicatedId], period_days: 30, estimate_only: true }, 800);
+    if (renewal && !(Number(renewal.amount) > 0)) {
+      console.log('>> renewal quote has no amount');
+      exitCode = 1;
+    }
+  } else {
+    sectionDivider('21. renewal quote — SKIPPED (no mobile or server proxy)');
+  }
+
+  if (hosted) {
+    sectionDivider('22. callTool quote_proxy_purchase (mobile, RU, 30 days) — no charge');
+    const quote = await call('quote_proxy_purchase', { country: 'RU', period_days: 30 }, 800);
+    if (quote && !quote.checkout_url) {
+      console.log('>> quote has no checkout_url');
+      exitCode = 1;
+    }
+  }
+
   /* change_geo, rotate_until_clean, set_tcp_fingerprint, residential IP refresh, real
-     purchases and set_residential_geo writes are intentionally skipped: they change hardware,
+     purchases and renewals, set_residential_geo writes, update_proxy_settings,
+     change_proxy_credentials and reboot_modem are intentionally skipped: they change hardware,
      network behaviour, the exit IP, money or the proxy login. rotate_ip above covers rotation. */
-  sectionDivider('SKIPPED: change_geo, rotate_until_clean, set_tcp_fingerprint, residential rotate, purchases, residential geo writes');
+  sectionDivider('SKIPPED: change_geo, rotate_until_clean, set_tcp_fingerprint, residential rotate, purchases, renewals, settings/credentials writes, reboot_modem');
 
   sectionDivider(`Result: ${exitCode === 0 ? 'PASS' : 'FAIL'}`);
 } catch (err) {
