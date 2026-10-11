@@ -20,6 +20,8 @@ export interface HttpAppOptions {
   allowedHosts?: string[];
   createApi: (apiKey: string) => MobileProxyAPI;
   validateApiKey: (apiKey: string) => Promise<boolean>;
+  /** Return hosts of known MCP clients; other redirect hosts get a warning on the consent page. */
+  trustedRedirectHosts?: string[];
 }
 
 export function createHttpApp(o: HttpAppOptions): express.Express {
@@ -37,7 +39,7 @@ export function createHttpApp(o: HttpAppOptions): express.Express {
   });
 
   if (sealer) {
-    const oauth = createOAuth({ sealer, verifier, validateApiKey: o.validateApiKey });
+    const oauth = createOAuth({ sealer, verifier, validateApiKey: o.validateApiKey, trustedRedirectHosts: o.trustedRedirectHosts });
     app.post(oauth.consentPath, express.urlencoded({ extended: false, limit: '16kb' }), oauth.consentHandler);
     app.use(
       mcpAuthRouter({

@@ -4,10 +4,11 @@ import type { OAuthServerProvider, OAuthTokenVerifier } from '@modelcontextproto
 import type { OAuthRegisteredClientsStore } from '@modelcontextprotocol/sdk/server/auth/clients.js';
 import type { AuthInfo } from '@modelcontextprotocol/sdk/server/auth/types.js';
 import type { OAuthClientInformationFull, OAuthTokens } from '@modelcontextprotocol/sdk/shared/auth.js';
-import { InvalidGrantError, InvalidTokenError } from '@modelcontextprotocol/sdk/server/auth/errors.js';
+import { InvalidClientMetadataError, InvalidGrantError, InvalidTokenError } from '@modelcontextprotocol/sdk/server/auth/errors.js';
 import type { MobileProxyAPI } from '../api/client.js';
 import { MobileProxyAPIError } from '../api/errors.js';
 import { log } from '../utils/logger.js';
+import { classifyRedirect, DEFAULT_TRUSTED_REDIRECT_HOSTS, redirectUriProblem, type RedirectTrust } from './redirect-policy.js';
 import type { Sealer } from './seal.js';
 
 const ACCESS_TTL = 3600;
@@ -57,8 +58,12 @@ export function createOAuth(opts: {
   sealer: Sealer;
   verifier: OAuthTokenVerifier;
   validateApiKey: (apiKey: string) => Promise<boolean>;
+  /** Return hosts of known MCP clients; others get a warning on the consent page. */
+  trustedRedirectHosts?: readonly string[];
 }) {
   const { sealer } = opts;
+  const trustedHosts = opts.trustedRedirectHosts ?? DEFAULT_TRUSTED_REDIRECT_HOSTS;
+  const trustOf = (uri: string) => classifyRedirect(uri, trustedHosts);
 
   /* Codes and refresh tokens are self-contained, so single use is enforced by remembering spent
      ones until they expire. Refresh tokens rotate on every use, as OAuth 2.1 requires for the
@@ -98,6 +103,10 @@ export function createOAuth(opts: {
   const clientsStore: OAuthRegisteredClientsStore = {
     getClient,
     registerClient(client) {
+      for (const uri of client.redirect_uris ?? []) {
+        const problem = redirectUriProblem(String(uri));
+        if (problem) throw new InvalidClientMetadataError(problem);
+      }
       const issued = Math.floor(Date.now() / 1000);
       const stored = { ...client, client_id_issued_at: issued };
       return { ...stored, client_id: sealer.seal('client', { c: stored }, CLIENT_TTL) } as OAuthClientInformationFull;
@@ -118,12 +127,22 @@ export function createOAuth(opts: {
     },
 
     async authorize(client, params, res) {
+      /* Clients registered before the redirect policy existed live on inside their client_id,
+         so the policy is enforced here too. No redirect back: the target itself is the problem. */
+      const problem = redirectUriProblem(params.redirectUri);
+      if (problem) {
+        res.status(400).type('text/plain').send(`This connection cannot be authorized: ${problem}.`);
+        return;
+      }
       const request = sealer.seal(
         'request',
         { cid: client.client_id, ru: params.redirectUri, st: params.state, cc: params.codeChallenge, sc: params.scopes },
         REQUEST_TTL,
       );
-      sendConsentPage(res, { clientName: client.client_name, redirectUri: params.redirectUri, state: params.state, request });
+      sendConsentPage(res, {
+        clientName: client.client_name, redirectUri: params.redirectUri, state: params.state, request,
+        trust: trustOf(params.redirectUri),
+      });
     },
 
     async challengeForAuthorizationCode(client, authorizationCode) {
@@ -160,7 +179,10 @@ export function createOAuth(opts: {
       res.status(400).type('text/plain').send('This sign-in page has expired. Start the connection again from your MCP client.');
       return;
     }
-    const page = { clientName: client.client_name, redirectUri: pending.ru, state: pending.st, request: requestBlob };
+    const page = {
+      clientName: client.client_name, redirectUri: pending.ru, state: pending.st, request: requestBlob,
+      trust: trustOf(pending.ru),
+    };
 
     if (!allowAttempt(req.ip ?? 'unknown')) {
       sendConsentPage(res.status(429), { ...page, error: 'Too many attempts. Wait five minutes and try again.' });
@@ -196,13 +218,22 @@ const escapeHtml = (s: string) =>
 
 function sendConsentPage(
   res: Response,
-  p: { clientName?: string; redirectUri: string; state?: string; request: string; error?: string },
+  p: { clientName?: string; redirectUri: string; state?: string; request: string; error?: string; trust: RedirectTrust },
 ): void {
   const redirect = new URL(p.redirectUri);
   const cancel = new URL(p.redirectUri);
   cancel.searchParams.set('error', 'access_denied');
   if (p.state !== undefined) cancel.searchParams.set('state', p.state);
-  const app = escapeHtml(p.clientName || 'An MCP client');
+  /* The name comes from whoever registered the client, so for unknown return addresses it is
+     labelled unverified and the address itself is what the user is asked to check. */
+  const name = escapeHtml(p.clientName || 'An MCP client');
+  const app = p.trust.known ? name : `${name} <span class="tag">unverified · не проверено</span>`;
+  const dest = escapeHtml(p.trust.display);
+  const warning = p.trust.known
+    ? ''
+    : `<div class="warn"><strong>Unknown app · Неизвестное приложение</strong><br>
+After you enter the key, access to your account will be handed to <strong>${dest}</strong>. Continue only if you started this connection yourself from an app you trust.<br>
+После ввода ключа доступ к вашему аккаунту получит <strong>${dest}</strong>. Продолжайте, только если подключение начали вы сами в приложении, которому доверяете.</div>`;
 
   res
     .set({
@@ -223,11 +254,15 @@ h1{font-size:20px;margin:0 0 12px}p{margin:0 0 14px}.muted{color:#5b6573;font-si
 label{display:block;font-weight:600;margin:18px 0 6px}input{width:100%;box-sizing:border-box;padding:10px 12px;border:1px solid #c5cbd3;border-radius:6px;font:inherit}
 button{margin-top:18px;width:100%;padding:11px;border:0;border-radius:6px;background:#2f3c50;color:#fff;font:inherit;font-weight:600;cursor:pointer}
 .err{background:#fdecea;color:#8a1c14;border-radius:6px;padding:10px 12px;margin-bottom:14px}a{color:#2f5fa6}
+.warn{background:#fdecea;border:2px solid #c0392b;color:#7a1810;border-radius:8px;padding:12px 14px;margin:0 0 16px}
+.tag{display:inline-block;font-size:12px;font-weight:600;color:#7a1810;background:#fdecea;border-radius:4px;padding:1px 6px;margin-left:4px}
+.dest{font-weight:600;color:#1c2330}
 </style></head><body><main>
 <h1>Connect MobileProxy · Подключение MobileProxy</h1>
 ${p.error ? `<div class="err">${escapeHtml(p.error)}</div>` : ''}
+${warning}
 <p><strong>${app}</strong> will get access to your mobileproxy.space account: list and manage proxies, rotate IPs, and make purchases after your confirmation in the chat.</p>
-<p class="muted">You will be returned to ${escapeHtml(redirect.host)}. · После входа вы вернётесь на ${escapeHtml(redirect.host)}.</p>
+<p>Access goes to · Доступ получит: <span class="dest">${dest}</span></p>
 <form method="post" action="${CONSENT_PATH}">
 <input type="hidden" name="request" value="${escapeHtml(p.request)}">
 <label for="api_key">API key · API-ключ</label>

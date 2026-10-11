@@ -3,6 +3,7 @@ import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js'
 import { MobileProxyAPI } from './api/client.js';
 import { createServer } from './server.js';
 import { createHttpApp } from './http/app.js';
+import { trustedHostsFromEnv } from './http/redirect-policy.js';
 import { isValidApiKey } from './http/oauth.js';
 import { log } from './utils/logger.js';
 
@@ -36,6 +37,7 @@ function runHttp(): void {
     publicUrl,
     oauthSecret,
     trustProxy: process.env.MOBILEPROXY_TRUST_PROXY === '1',
+    trustedRedirectHosts: trustedHostsFromEnv(process.env.MOBILEPROXY_TRUSTED_REDIRECT_HOSTS),
     allowedHosts: local ? [`localhost:${port}`, `127.0.0.1:${port}`] : [publicUrl.host],
     createApi: newApi,
     validateApiKey: (apiKey) => isValidApiKey(newApi(apiKey)),

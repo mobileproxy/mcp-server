@@ -108,5 +108,14 @@ cd /opt/mobileproxy-mcp && docker compose pull && docker compose up -d
 | `MOBILEPROXY_PUBLIC_URL` | `http://localhost:PORT` | Public origin; OAuth metadata and the allowed Host header come from it |
 | `MOBILEPROXY_OAUTH_SECRET` | unset | ≥32 chars; enables OAuth. Without it only raw API keys are accepted |
 | `MOBILEPROXY_TRUST_PROXY` | unset | `1` behind nginx, so rate limits see real client IPs |
+| `MOBILEPROXY_TRUSTED_REDIRECT_HOSTS` | unset | Comma-separated return hosts added to the known MCP clients (claude.ai, claude.com, chatgpt.com, chat.openai.com, vscode.dev, insiders.vscode.dev; loopback and `cursor://`/`vscode://` are always known). Other hosts get an "unknown app" warning on the consent page |
+
+### OAuth client registration
+
+Dynamic Client Registration (`/register`, RFC 7591) stays open because MCP clients rely on it; it is
+stateless and rate-limited (20 per hour per IP). Redirect URIs must be `https`, `http` on a loopback
+address, or a native-app scheme (RFC 8252); `javascript:`, `data:`, `file:` and remote `http` are refused
+at registration and again at authorization. The consent page always shows where access goes and asks
+for the user's own API key, so a self-registered client cannot obtain a token without it.
 
 `attach_proxy_to_adspower` is not offered on the remote endpoint: it needs AdsPower on the user's own computer.
